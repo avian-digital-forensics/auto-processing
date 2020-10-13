@@ -247,11 +247,11 @@ func (r *run) handle(err error) {
 	)
 	defer r.close()
 
-	logger.Debug("Runner has stopped")
 	// handle the error
 	if err != nil {
 		logger.Error("Runner failed", zap.String("exception", nuixError(err).Error()))
 	}
+	logger.Debug("Runner is executing")
 	return
 }
 
@@ -259,7 +259,7 @@ func (r *run) close() error {
 	if r == nil {
 		return errors.New("run is already closed")
 	}
-	r.queue.logger.Debug("Closing runner", zap.String("runner", r.runner.Name))
+	r.queue.logger.Debug("Closing runner ps-session", zap.String("runner", r.runner.Name))
 
 	r.client.Close()
 	r.client = nil

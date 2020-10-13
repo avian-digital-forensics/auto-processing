@@ -335,7 +335,7 @@ func (s RunnerService) Delete(ctx context.Context, r api.RunnerDeleteRequest) (*
 
 func (s RunnerService) Start(ctx context.Context, r api.RunnerStartRequest) (*api.RunnerStartResponse, error) {
 	logger := s.logger.With(zap.String("runner", r.Runner), zap.Int("runner_id", int(r.ID)))
-	logger.Info("Starting runner")
+	logger.Info("STARTING RUNNER")
 	var runner api.Runner
 	if err := s.DB.First(&runner, r.ID).Error; err != nil {
 		logger.Error("Cannot get runner", zap.String("exception", err.Error()))
@@ -354,7 +354,7 @@ func (s RunnerService) Start(ctx context.Context, r api.RunnerStartRequest) (*ap
 
 func (s RunnerService) Failed(ctx context.Context, r api.RunnerFailedRequest) (*api.RunnerFailedResponse, error) {
 	logger := s.logger.With(zap.String("runner", r.Runner), zap.Int("runner_id", int(r.ID)))
-	logger.Info("Failed runner")
+	logger.Info("FAILED RUNNER")
 	var runner api.Runner
 	if err := s.DB.First(&runner, r.ID).Error; err != nil {
 		logger.Error("Cannot get runner", zap.String("exception", err.Error()))
@@ -386,7 +386,7 @@ func (s RunnerService) Failed(ctx context.Context, r api.RunnerFailedRequest) (*
 
 func (s RunnerService) Finish(ctx context.Context, r api.RunnerFinishRequest) (*api.RunnerFinishResponse, error) {
 	logger := s.logger.With(zap.String("runner", r.Runner), zap.Int("runner_id", int(r.ID)))
-	logger.Info("Finished runner")
+	logger.Info("FINISHED RUNNER")
 
 	var runner api.Runner
 	if err := s.DB.First(&runner, r.ID).Error; err != nil {
