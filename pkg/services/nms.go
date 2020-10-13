@@ -2,8 +2,10 @@ package services
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"net/http"
+	"time"
 
 	api "github.com/avian-digital-forensics/auto-processing/pkg/avian-api"
 	"go.uber.org/zap"
@@ -26,12 +28,20 @@ func (s NmsService) Apply(ctx context.Context, r api.NmsApplyRequests) (*api.Nms
 	s.logger.Debug("Starting db-transaction for NMS-apply")
 	tx := s.db.BeginTx(ctx, nil)
 
+	// Create http-client for testing the nms with insecure tls
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+		Timeout: 10 * time.Second,
+	}
+
 	// Iterate over the requested nm-servers
 	// and append them to the response
 	var resp api.NmsApplyResponse
 	for _, nms := range r.Nms {
 		// Test the http-connection to the NMS
-		if _, err := http.Get(fmt.Sprintf("https://%s:%d", nms.Address, nms.Port)); err != nil {
+		if _, err := client.Get(fmt.Sprintf("https://%s:%d", nms.Address, nms.Port)); err != nil {
 			return nil, fmt.Errorf("Cannot establish connection to NMS with address: %s:%d - %v", nms.Address, nms.Port, err)
 		}
 
