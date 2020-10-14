@@ -27,6 +27,7 @@ import (
 	api "github.com/avian-digital-forensics/auto-processing/pkg/avian-api"
 	"github.com/avian-digital-forensics/auto-processing/pkg/datastore/tables"
 	"github.com/avian-digital-forensics/auto-processing/pkg/logging"
+	"github.com/avian-digital-forensics/auto-processing/pkg/pwsh"
 	"github.com/avian-digital-forensics/auto-processing/pkg/services"
 	"github.com/avian-digital-forensics/auto-processing/pkg/utils"
 	"github.com/gorilla/handlers"
@@ -35,8 +36,6 @@ import (
 	"go.uber.org/zap/zapcore"
 
 	"github.com/pacedotdev/oto/otohttp"
-	ps "github.com/simonjanss/go-powershell"
-	"github.com/simonjanss/go-powershell/backend"
 	"github.com/spf13/cobra"
 
 	"github.com/jinzhu/gorm"
@@ -161,7 +160,7 @@ func run() error {
 
 	// Create a powershell-shell for remote connections
 	logger.Info("Creating powershell-process for remote-connections")
-	shell, err := ps.New(&backend.Local{})
+	shell, err := pwsh.New()
 	if err != nil {
 		return fmt.Errorf("unable to create powershell-process : %v", err)
 	}
