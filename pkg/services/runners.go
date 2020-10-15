@@ -4,29 +4,25 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
 	api "github.com/avian-digital-forensics/auto-processing/pkg/avian-api"
 	avian "github.com/avian-digital-forensics/auto-processing/pkg/avian-client"
 	"github.com/avian-digital-forensics/auto-processing/pkg/logging"
-	"github.com/avian-digital-forensics/auto-processing/pkg/powershell"
-	ps "github.com/simonjanss/go-powershell"
+	"github.com/avian-digital-forensics/auto-processing/pkg/pwsh"
 
 	"github.com/jinzhu/gorm"
-	"github.com/natefinch/lumberjack"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 type RunnerService struct {
 	DB         *gorm.DB
-	shell      ps.Shell
+	shell      pwsh.Powershell
 	logger     *zap.Logger
 	logHandler logging.Service
 }
 
-func NewRunnerService(db *gorm.DB, shell ps.Shell, logger *zap.Logger, logHandler logging.Service) RunnerService {
+func NewRunnerService(db *gorm.DB, shell pwsh.Powershell, logger *zap.Logger, logHandler logging.Service) RunnerService {
 	return RunnerService{
 		DB:         db,
 		shell:      shell,
@@ -92,11 +88,13 @@ func (s RunnerService) Apply(ctx context.Context, r api.RunnerApplyRequest) (*ap
 	if fromDB.ID != 0 {
 		if !r.Update {
 			logger.Error("Create a new runner by a unique name or update existing", zap.String("exception", "runner already exists"))
+			tx.Rollback()
 			return nil, fmt.Errorf("runner: %s already exist, create a new runner by a unique name", runner.Name)
 		}
 
 		if fromDB.Active {
 			logger.Error("Runner is active, cannot update an active runner")
+			tx.Rollback()
 			return nil, errors.New("cannot update active runner")
 		}
 
@@ -144,6 +142,7 @@ func (s RunnerService) Apply(ctx context.Context, r api.RunnerApplyRequest) (*ap
 	logger.Info("Looking if server exists")
 	if s.DB.First(&server, "hostname = ?", runner.Hostname).RecordNotFound() {
 		logger.Error("Requested server for runner does not exist", zap.String("exception", "server not found"))
+		tx.Rollback()
 		return nil, fmt.Errorf("server: %s doesn't exist in the backend, list existing servers by command: 'avian servers list'", runner.Hostname)
 	}
 
@@ -151,42 +150,28 @@ func (s RunnerService) Apply(ctx context.Context, r api.RunnerApplyRequest) (*ap
 	logger.Info("Looking if NMS exist")
 	if s.DB.First(&api.Nms{}, "address = ?", runner.Nms).RecordNotFound() {
 		logger.Error("Requested NMS for runner does not exist", zap.String("exception", "nms not found"))
+		tx.Rollback()
 		return nil, fmt.Errorf("nms: %s doesn't exist in the backend, list existing nm-servers by command: 'avian nms list'", runner.Nms)
 	}
 
 	// Create powershell-connection to test the server
 	logger.Info("Creating powershell-session for runner")
-
-	// set options for the connection
-	var opts powershell.Options
-	opts.Host = server.Hostname
-	if len(server.Username) != 0 {
-		logger.Debug("Adding credentials for powershell-session")
-		opts.Username = server.Username
-		opts.Password = server.Password
-	}
-
-	// create the client
-	client, err := powershell.NewClient(s.shell, opts)
+	session, err := s.shell.NewSessionCredSSP(server.Hostname, server.Username, server.Password)
 	if err != nil {
 		logger.Error("Failed to create remote-client for powershell", zap.String("exception", err.Error()))
+		tx.Rollback()
 		return nil, fmt.Errorf("failed to create remote-client for powershell: %v", err)
 	}
 
 	// close the client on exit
-	defer client.Close()
+	defer session.Close()
 
 	// check that all the paths for the runner exists in the server
 	logger.Info("Validating paths for runner")
 	for _, path := range runner.Paths() {
-		var err error
-		if powershell.IsUnc(path) {
-			err = client.CheckPathFromHost(path)
-		} else {
-			err = client.CheckPath(path)
-		}
-		if err != nil {
+		if err := session.CheckPath(path); err != nil {
 			logger.Error("Failed to validate path", zap.String("path", path), zap.String("exception", err.Error()))
+			tx.Rollback()
 			return nil, fmt.Errorf("path: %s - err : %v", path, err)
 		}
 	}
@@ -585,29 +570,6 @@ func (s RunnerService) LogError(ctx context.Context, r api.LogRequest) (*api.Log
 	return &api.LogResponse{}, nil
 }
 
-func (s RunnerService) getLogger(logName string) (*zap.Logger, error) {
-	log, err := os.OpenFile(logName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		return nil, fmt.Errorf("error opening log-file %s: %v", logName, err)
-	}
-
-	lumberjackLogger := &lumberjack.Logger{
-		Filename:   log.Name(),
-		MaxSize:    0, // megabytes
-		MaxBackups: 3,
-		MaxAge:     1, //days
-	}
-
-	core := zapcore.NewCore(
-		zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()),
-		zapcore.AddSync(lumberjackLogger),
-		zap.DebugLevel,
-	)
-
-	logger := zap.New(core)
-	return logger, nil
-}
-
 func (s RunnerService) SetServerActivity(runner api.Runner, active bool) error {
 	if err := s.DB.Model(&api.Server{}).Where("hostname = ?", runner.Hostname).Update("active", active).Error; err != nil {
 		s.logger.Error("Cannot set servers activity",
@@ -676,10 +638,6 @@ func getPreloadedRunner(db *gorm.DB, runner *api.Runner) error {
 		First(&runner, "name = ?", runner.Name).Error
 }
 
-func mergeRunner(src, dst api.Runner) {
-
-}
-
 func (s RunnerService) RemoveScript(runner api.Runner) error {
 	logger := s.logger.With(zap.String("runner", runner.Name))
 	var server api.Server
@@ -688,27 +646,18 @@ func (s RunnerService) RemoveScript(runner api.Runner) error {
 		return fmt.Errorf("Failed to retrive server from db: %s - %v", runner.Hostname, err.Error())
 	}
 
-	// set options for the connection
-	var opts powershell.Options
-	opts.Host = server.Hostname
-	if len(server.Username) != 0 {
-		logger.Debug("Adding credentials for powershell-session")
-		opts.Username = server.Username
-		opts.Password = server.Password
-	}
-
-	// create the client
-	client, err := powershell.NewClient(s.shell, opts)
+	logger.Info("Creating powershell-session for runner")
+	session, err := s.shell.NewSessionCredSSP(server.Hostname, server.Username, server.Password)
 	if err != nil {
 		logger.Error("Failed to create remote-client for powershell", zap.String("exception", err.Error()))
 		return fmt.Errorf("failed to create remote-client for powershell: %v", err)
 	}
 
 	// close the client on exit
-	defer client.Close()
+	defer session.Close()
 
 	var scriptName = fmt.Sprintf("%s\\%s.gen.rb", server.NuixPath, runner.Name)
-	if err := client.RemoveItem(scriptName); err != nil {
+	if err := session.RemoveItem(scriptName); err != nil {
 		logger.Error("Failed to remove script-file in ps-session",
 			zap.String("server", runner.Hostname),
 			zap.String("nuix_path", server.NuixPath),

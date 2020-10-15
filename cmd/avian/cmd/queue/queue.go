@@ -9,11 +9,10 @@ import (
 	"github.com/avian-digital-forensics/auto-processing/generate/ruby"
 	api "github.com/avian-digital-forensics/auto-processing/pkg/avian-api"
 	"github.com/avian-digital-forensics/auto-processing/pkg/avian-client"
-	"github.com/avian-digital-forensics/auto-processing/pkg/powershell"
+	"github.com/avian-digital-forensics/auto-processing/pkg/pwsh"
 	"go.uber.org/zap"
 
 	"github.com/jinzhu/gorm"
-	ps "github.com/simonjanss/go-powershell"
 )
 
 const (
@@ -22,13 +21,13 @@ const (
 
 type Queue struct {
 	db     *gorm.DB
-	shell  ps.Shell
+	shell  pwsh.Powershell
 	uri    string
 	logger *zap.Logger
 }
 
 // New returns a new queue
-func New(db *gorm.DB, shell ps.Shell, uri string, logger *zap.Logger) Queue {
+func New(db *gorm.DB, shell pwsh.Powershell, uri string, logger *zap.Logger) Queue {
 	return Queue{db: db, shell: shell, uri: uri, logger: logger}
 }
 
@@ -92,11 +91,11 @@ func (q *Queue) loop() {
 }
 
 type run struct {
-	queue  *Queue
-	runner *api.Runner
-	server *api.Server
-	nms    *api.Nms
-	client *powershell.Client
+	queue   *Queue
+	runner  *api.Runner
+	server  *api.Server
+	nms     *api.Nms
+	session pwsh.Session
 }
 
 func (q *Queue) newRun(runner *api.Runner, server *api.Server, nms *api.Nms) *run {
@@ -158,39 +157,32 @@ func (r *run) start() error {
 
 	// Create powershell-connection
 	logger.Info("Starting powershell-connection for runner")
-
-	// set options for the connection
-	var opts powershell.Options
-	opts.Host = r.server.Hostname
-	if len(r.server.Username) != 0 {
-		logger.Debug("Adding credentials for powershell-session")
-		opts.Username = r.server.Username
-		opts.Password = r.server.Password
-	}
-
-	// create the client
-	client, err := powershell.NewClient(r.queue.shell, opts)
+	session, err := r.queue.shell.NewSessionCredSSP(r.server.Hostname, r.server.Username, r.server.Password)
 	if err != nil {
+		logger.Error("Failed to create remote-client for powershell", zap.String("exception", err.Error()))
 		return fmt.Errorf("failed to create remote-client for powershell: %v", err)
 	}
-	r.client = client
+
+	// close the client on exit
+	defer session.Close()
+	r.session = session
 	logger.Debug("Powershell-client has been created for runner")
 
 	// Check for case-locks
-	if err := removeCaseLocks(client, logger, r.runner.CaseSettings); err != nil {
-		client.Close()
+	if err := removeCaseLocks(session, logger, r.runner.CaseSettings); err != nil {
+		session.Close()
 		return err
 	}
 
 	// Set nuix username as an env-variable
-	if err := client.SetEnv("NUIX_USERNAME", r.nms.Username); err != nil {
-		client.Close()
+	if err := session.SetEnv("NUIX_USERNAME", r.nms.Username); err != nil {
+		session.Close()
 		return fmt.Errorf("unable to set NUIX_USERNAME env-variable: %v", err)
 	}
 
 	// Set nuix password as an env-variable
-	if err := client.SetEnv("NUIX_PASSWORD", r.nms.Password); err != nil {
-		client.Close()
+	if err := session.SetEnv("NUIX_PASSWORD", r.nms.Password); err != nil {
+		session.Close()
 		return fmt.Errorf("unable to set NUIX_PASSWORD env-variable: %v", err)
 	}
 
@@ -202,8 +194,8 @@ func (r *run) start() error {
 		zap.String("script", scriptName),
 	)
 
-	if err := client.CreateFile(r.server.NuixPath, scriptName, []byte(script)); err != nil {
-		client.Close()
+	if err := session.CreateFile(r.server.NuixPath, scriptName, []byte(script)); err != nil {
+		session.Close()
 		return fmt.Errorf("Failed to create script-file: %v", err)
 	}
 	//defer client.RemoveFile(r.server.NuixPath, scriptName)
@@ -219,7 +211,6 @@ func (r *run) start() error {
 
 	// format switches for powershell
 	var args = []string{
-		"nuix_console.exe",
 		"-Xmx" + r.runner.Xmx,
 		fmt.Sprintf("-Dnuix.registry.servers=%s", r.nms.Address),
 		"-licencesourcetype " + "server",
@@ -234,7 +225,12 @@ func (r *run) start() error {
 
 	args = append(args, scriptName)
 
-	return client.Run(r.server.NuixPath, args...)
+	if err := session.SetLocation(r.server.NuixPath); err != nil {
+		logger.Error("Failed to set location", zap.String("exception", err.Error()))
+		return fmt.Errorf("Failed to set location: %v", err)
+	}
+
+	return session.Run("nuix_console.exe", args...)
 }
 
 func (r *run) handle(err error) {
@@ -250,6 +246,7 @@ func (r *run) handle(err error) {
 	// handle the error
 	if err != nil {
 		logger.Error("Runner failed", zap.String("exception", nuixError(err).Error()))
+		return
 	}
 	logger.Debug("Runner is executing")
 	return
@@ -261,8 +258,8 @@ func (r *run) close() error {
 	}
 	r.queue.logger.Debug("Closing runner ps-session", zap.String("runner", r.runner.Name))
 
-	r.client.Close()
-	r.client = nil
+	r.session.Close()
+	r.session = nil
 	r.queue = nil
 	r.runner = nil
 	r.server = nil
@@ -343,7 +340,7 @@ func nuixError(err error) error {
 	return errors.New(newErr)
 }
 
-func removeCaseLocks(client *powershell.Client, logger *zap.Logger, caseSettings *api.CaseSettings) error {
+func removeCaseLocks(session pwsh.Session, logger *zap.Logger, caseSettings *api.CaseSettings) error {
 	// Check for case-locks
 	var caseDirs []string
 	caseDirs = append(caseDirs, caseSettings.Case.Directory)
@@ -356,36 +353,25 @@ func removeCaseLocks(client *powershell.Client, logger *zap.Logger, caseSettings
 
 	logger.Debug("Checking for case.locks in case-directories")
 	for _, dir := range caseDirs {
-		// if err == nil means the lock exists
-		var err error
-		caseLock := dir + "/case.lock"
-		if powershell.IsUnc(dir) {
-			err = client.CheckPathFromHost(caseLock)
-		} else {
-			err = client.CheckPath(caseLock)
-		}
-		if err == nil {
-			logger.Debug("Found case.lock in case-directory")
-			logger.Info("Deleting case.lock in case-directory", zap.String("directory", dir))
-			if err := client.RemoveItem(caseLock); err != nil {
-				return fmt.Errorf("Failed to remove case.lock from %s : %v", dir, err)
+		removeItem := func(path string) error {
+			// err == nil means the lock exists
+			if err := session.CheckPath(path); err == nil {
+				logger.Debug("Found item in case-directory")
+				logger.Info("Deleting item in case-directory", zap.String("path", path))
+				if err := session.RemoveItem(path); err != nil {
+					return fmt.Errorf("Failed to remove case.lock from %s : %v", dir, err)
+				}
+				logger.Debug("Deleted item in case-directory", zap.String("path", path))
 			}
-			logger.Debug("Deleted case.lock in case-directory", zap.String("directory", dir))
+			return nil
 		}
 
-		caseLockProperties := dir + "/case.lock.properties"
-		if powershell.IsUnc(caseLockProperties) {
-			err = client.CheckPathFromHost(caseLockProperties)
-		} else {
-			err = client.CheckPath(caseLockProperties)
+		if err := removeItem(dir + "/case.lock"); err != nil {
+			return err
 		}
-		if err == nil {
-			logger.Debug("Found case.lock.properties in case-directory")
-			logger.Info("Deleting case.lock.properties in case-directory", zap.String("directory", dir))
-			if err := client.RemoveItem(caseLockProperties); err != nil {
-				return fmt.Errorf("Failed to remove case.lock.properties from %s : %v", dir, err)
-			}
-			logger.Debug("Deleted case.lock.properties in case-directory", zap.String("directory", dir))
+
+		if err := removeItem(dir + "/case.lock.properties"); err != nil {
+			return err
 		}
 	}
 	return nil

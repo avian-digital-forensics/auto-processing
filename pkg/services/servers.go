@@ -5,20 +5,19 @@ import (
 	"fmt"
 
 	api "github.com/avian-digital-forensics/auto-processing/pkg/avian-api"
-	"github.com/avian-digital-forensics/auto-processing/pkg/powershell"
+	"github.com/avian-digital-forensics/auto-processing/pkg/pwsh"
 	"go.uber.org/zap"
 
 	"github.com/jinzhu/gorm"
-	ps "github.com/simonjanss/go-powershell"
 )
 
 type ServerService struct {
 	db     *gorm.DB
-	shell  ps.Shell
+	shell  pwsh.Powershell
 	logger *zap.Logger
 }
 
-func NewServerService(db *gorm.DB, shell ps.Shell, logger *zap.Logger) ServerService {
+func NewServerService(db *gorm.DB, shell pwsh.Powershell, logger *zap.Logger) ServerService {
 	return ServerService{db: db, shell: shell, logger: logger}
 }
 
@@ -53,27 +52,29 @@ func (s ServerService) Apply(ctx context.Context, r api.ServerApplyRequest) (*ap
 	if newSrv.ID == 0 || newSrv.NuixPath != r.NuixPath {
 		logger.Debug("Testing the server")
 
-		logger.Info("Creating new remote-client for powershell")
-		// set options for the connection
-		var opts powershell.Options
-		opts.Host = newSrv.Hostname
-		if len(newSrv.Username) != 0 {
-			logger.Debug("Adding credentials for powershell-session")
-			opts.Username = newSrv.Username
-			opts.Password = newSrv.Password
-		}
-
 		// create the client
-		client, err := powershell.NewClient(s.shell, opts)
+		logger.Info("Creating powershell-session for the testing server")
+		session, err := s.shell.NewSession(r.Hostname, r.Username, r.Password)
 		if err != nil {
 			logger.Error("Failed to create remote-client for powershell", zap.String("exception", err.Error()))
 			return nil, fmt.Errorf("failed to create remote-client for powershell: %v", err)
 		}
 
-		if err := client.CheckPath(r.NuixPath); err != nil {
+		// close the client on exit
+		defer session.Close()
+
+		if err := session.CheckPath(r.NuixPath); err != nil {
 			logger.Error("Failed to test NuixPath for server", zap.String("exception", err.Error()))
 			return nil, fmt.Errorf("failed to test nuix-path for server: %v", err)
 		}
+
+		logger.Debug("Path is ok for server")
+		logger.Debug("Enabling CredSSP")
+		if err := session.EnableCredSSP(); err != nil {
+			logger.Error("Failed to enable CredSSP", zap.String("exception", err.Error()))
+			return nil, fmt.Errorf("failed to enable credssp: %v", err)
+		}
+
 	}
 
 	// Set data to the new Server-model
