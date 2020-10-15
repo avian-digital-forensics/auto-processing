@@ -34,6 +34,7 @@ import (
 	"github.com/natefinch/lumberjack"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"golang.org/x/sys/windows"
 
 	"github.com/pacedotdev/oto/otohttp"
 	"github.com/spf13/cobra"
@@ -83,6 +84,14 @@ func init() {
 }
 
 func run() error {
+	// check that the service is run as admin
+	if ok, err := isAdmin(); !ok {
+		if err != nil {
+			return fmt.Errorf("service must run as admin: %v", err)
+		}
+		return fmt.Errorf("service must run as admin")
+	}
+
 	if err := setLoggers(); err != nil {
 		return fmt.Errorf("failed to set lumberjack-loggers : %v", err)
 	}
@@ -267,4 +276,28 @@ func setLoggers() error {
 func lumberjackZapHook(e zapcore.Entry) error {
 	serviceLogger.Write([]byte(fmt.Sprintf("%+v", e)))
 	return nil
+}
+
+func isAdmin() (bool, error) {
+	var sid *windows.SID
+	err := windows.AllocateAndInitializeSid(
+		&windows.SECURITY_NT_AUTHORITY,
+		2,
+		windows.SECURITY_BUILTIN_DOMAIN_RID,
+		windows.DOMAIN_ALIAS_RID_ADMINS,
+		0, 0, 0, 0, 0, 0,
+		&sid,
+	)
+	if err != nil {
+		return false, fmt.Errorf("SID Error: %s", err)
+	}
+
+	defer windows.FreeSid(sid)
+	token := windows.Token(0)
+
+	member, err := token.IsMember(sid)
+	if err != nil {
+		return false, fmt.Errorf("Token Membership Error: %s", err)
+	}
+	return member, nil
 }
