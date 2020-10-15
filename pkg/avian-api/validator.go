@@ -2,8 +2,13 @@ package api
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/pkg/errors"
+)
+
+const (
+	workerTempDirLength int = 45
 )
 
 func (r *Runner) Validate() error {
@@ -42,6 +47,33 @@ func (r *Runner) Validate() error {
 		if stage.Nil() {
 			return fmt.Errorf("Stage: %d - unable to parse what stage it is - check syntax", i+1)
 		}
+
+		// Check if Ocr or Populate is provided - case directory or spoolDir needs to be
+		// less than 45 characters or else the processing will fail
+		if stage.Ocr != nil || stage.Populate != nil {
+			// Check if the case-directory has more than 45 characters
+			if len(r.CaseSettings.Case.Directory) > workerTempDirLength {
+				spoolDirOK := false
+				// iterate through the switches to see
+				// if the spoolDir is provided
+				spoolDirSwitch := "-Dnuix.export.spoolDir="
+				for _, s := range r.Switches {
+					if strings.HasPrefix(s.Value, spoolDirSwitch) {
+						spoolDir := strings.TrimPrefix(s.Value, spoolDirSwitch)
+						// set spoolDirOK to true if the spoolDir has less than 45 characters
+						if len(spoolDir) < workerTempDirLength {
+							spoolDirOK = true
+						}
+					}
+				}
+
+				// return error if the case-dir or spoolDir has more than 45 characters
+				if !spoolDirOK {
+					return fmt.Errorf("provide a path with less than %d characters in the switch: '%s' to perform ocr/populate", workerTempDirLength, spoolDirSwitch)
+				}
+			}
+		}
+
 		stage.Index = uint(i)
 	}
 	return nil
