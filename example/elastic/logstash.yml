@@ -119,38 +119,28 @@ filter {
             '
             # uppdatera mappen
             map_action => "update"
-#            timeout => 86400
-#            inactivity_timeout => 300
+
         }
     }
 }
 
 filter {
-    if [automation][msg] == "STARTING RUNNER" {
-        mutate { add_tag => ["runnerStarted"] }
-    } else if [automation][msg] == "FINISHED RUNNER" {
-        mutate { add_tag => ["runnerFinished"] }
-    } else if [automation][msg] == "STARTING STAGE" {
-        mutate { add_tag => ["stageStarted"] }
-    } else if [automation][msg] == "FINISHED STAGE" {
-        mutate { add_tag => ["stageFinished"] }
-    }
+
 
     mutate { add_field => { "runner" => "%{[automation][runner]}" } }
 
     elapsed {
-      start_tag => "runnerStarted"
-      end_tag => "runnerFinished"
-#      periodic_flush => true
+      start_tag => "STARTING-RUNNER"
+      end_tag => "ENDING-RUNNER"
       unique_id_field => "runner"
       timeout => 86400
       new_event_on_match => false
     }
 
     elapsed {
-      start_tag => "stageStarted"
-      end_tag => "stageFinished"
-#      periodic_flush => true
+      start_tag => "STARTING-STAGE"
+      end_tag => "ENDING-STAGE"
+
       unique_id_field => "runner"
       timeout => 86400
       new_event_on_match => false
@@ -166,12 +156,7 @@ filter {
 }
 
 
-#filter {
-#  ruby {
-#        code => 'event.set("duration_time", event.get("elapsed_time")) / 60 rescue nil'
-#         code => 'event.set("lowercase_field", event.get("message").downcase)'
-#    }
-#}
+
 
 filter {
   mutate {

@@ -9,18 +9,21 @@ filebeat.inputs:
      - ${nuix.logdir}\Logs\*\nuix.log
   include_lines: ['-\s*S\s*T\s*A\s*R\s*T\s*I\s*N\s*G\s*R\s*U\s*N\s*N\s*E\s*R']
   tags: ["NUIX-RUNNER-START" ,"CASE-TRIGGER"]
+  scan_frequency: 5s
 
 - type: log
   paths:
      - ${nuix.logdir}\Logs\*\nuix.log
   include_lines: ['-\s*F\s*I\s*N\s*I\s*S\s*H\s*E\s*D\s*R\s*U\s*N\s*N\s*E\s*R']
   tags: ["NUIX-RUNNER-END" ,"CASE-TRIGGER"]
+  scan_frequency: 5s
 
 - type: log
   paths:
      - ${nuix.logdir}\Logs\*\nuix.log
   include_lines: ['-\s*i\s*t\s*e\s*m\s*p\s*r\s*o\s*c\s*e\s*s\s*s\s*e\s*d\s*:']
   tags: ["NUIX-MAIN-LOG-INFO" ,"AUTOMATION-CASE-ITEM"]
+  scan_frequency: 5s
 
 - type: log
   paths:
@@ -31,6 +34,7 @@ filebeat.inputs:
   multiline.pattern: '^[[:space:]]+(at|\.{3})[[:space:]]+\b|^Caused by:|^com|^java'
   multiline.negate: false
   multiline.match: after
+  scan_frequency: 5s
 
 - type: log
   paths:
@@ -42,6 +46,7 @@ filebeat.inputs:
   multiline.pattern: '^[[:space:]]+(at|\.{3})[[:space:]]+\b|^Caused by:|^com|^java'
   multiline.negate: false
   multiline.match: after
+  scan_frequency: 5s
 
 - type: log
   paths:
@@ -55,6 +60,7 @@ filebeat.inputs:
   multiline.pattern: '^[[:space:]]+(at|\.{3})[[:space:]]+\b|^Caused by:|^com|^java'
   multiline.negate: false
   multiline.match: after
+  scan_frequency: 5s
 
 - type: log
   paths:
@@ -65,6 +71,7 @@ filebeat.inputs:
   multiline.pattern: '^[[:space:]]+(at|\.{3})[[:space:]]+\b|^Caused by:|^com|^java'
   multiline.negate: false
   multiline.match: after
+  scan_frequency: 5s
 
 - type: log
   paths:
@@ -75,6 +82,7 @@ filebeat.inputs:
   multiline.pattern: '^[[:space:]]+(at|\.{3})[[:space:]]+\b|^Caused by:|^com|^java'
   multiline.negate: false
   multiline.match: after
+  scan_frequency: 5s
 
 - type: log
   paths:
@@ -85,73 +93,89 @@ filebeat.inputs:
   multiline.pattern: '^[[:space:]]+(at|\.{3})[[:space:]]+\b|^Caused by:|^com|^java'
   multiline.negate: false
   multiline.match: after
+  scan_frequency: 5s
 
 - type: log
   paths:
      - ${nuix.logdir}\Logs\*\*\*\ocr.log
   tags: ["OCR-LOG"]
+  scan_frequency: 10s
 
 
 - type: log
   paths:
      - ${nuix.logdir}\Logs\*\*\*\abby*.log
   tags: ["ABBY-WORKER-LOG"]
+  scan_frequency: 5s
 
 - type: log
   paths:
-     - ${automation.logdir}\service.log
-     - ${automation.logdir2}\service.log
-  include_lines: ['-\s*i\s*t\s*e\s*m\s*p\s*r\s*o\s*c\s*e\s*s\s*s\s*e\s*d\s*:']
-  tags: ["AUTOMATION" ,"AUTOMATION-CASE-ITEM"]
-
+     - ${automation.logdir}\*.log
+     - ${automation.logdir2}\*.log
+  include_lines: ['"\s*[Pp]\s*[Rr]\s*[Oo]\s*[Cc]\s*[Ee]\s*[Ss]\s*[Ss]\s*[Ee]\s*[Dd]\s*[Ii]\s*[Tt]\s*[Ee]\s*[Mm]\s*"']
+  tags: ["AUTOMATION", "AUTOMATION-CASE-ITEM"]
+  scan_frequency: 1s
 - type: log
   paths:
-     - ${automation.logdir}\service.log
-     - ${automation.logdir2}\service.log
-  include_lines: ['S\s*T\s*A\s*R\s*T\s*I\s*N\s*G\s*R\s*U\s*N\s*N\s*E\s*R']
+     - ${automation.logdir}\*.log
+     - ${automation.logdir2}\*.log
+  include_lines: ['[Ss]\s*[Tt]\s*[Aa]\s*[Rr]\s*[Tt]\s*[Ii]\s*[Nn]\s*[Gg]\s*[Rr]\s*[Uu]\s*[Nn]\s*[Nn]\s*[Ee]\s*[Rr]']
   tags: ["AUTOMATION", "AUTOMATION-STARTING-RUNNER"]
+  scan_frequency: 1s
 
 - type: log
   paths:
-     - ${automation.logdir}\service.log
-     - ${automation.logdir2}\service.log
-  include_lines: ['S\s*T\s*A\s*R\s*T\s*I\s*N\s*G\s*S\s*T\s*A\s*G\s*E']
+     - ${automation.logdir}\*.log
+     - ${automation.logdir2}\*.log
+  include_lines: ['[Ss]\s*[Tt]\s*[Aa]\s*[Rr]\s*[Tt]\s*[Ii]\s*[Nn]\s*[Gg]\s*[Ss]\s*[Tt]\s*[Aa]\s*[Gg]\s*[Ee]']
   tags: ["AUTOMATION", "AUTOMATION-STARTING-STAGE"]
+  scan_frequency: 1s
 
 - type: log
   paths:
-     - ${automation.logdir}\service.log
-     - ${automation.logdir2}\service.log
-  include_lines: ['F\s*A\s*I\s*L\s*E\s*D\s*R\s*U\s*N\s*N\s*E\s*R']
+     - ${automation.logdir}\*.log
+     - ${automation.logdir2}\*.log
+  include_lines: ['[Ff]\s*[Aa]\s*[Ii]\s*[Ll]\s*[Ee]\s*[Dd]\s*[Rr]\s*[Uu]\s*[Nn]\s*[Nn]\s*[Ee]\s*[Rr]']
   tags: ["AUTOMATION", "AUTOMATION-FAILED-RUNNER"]
+  scan_frequency: 1s
 
 - type: log
   paths:
-     - ${automation.logdir}\service.log
-     - ${automation.logdir2}\service.log
-  include_lines: ['F\s*I\s*N\s*I\s*S\s*H\s*E\s*D\s*R\s*U\s*N\s*N\s*E\s*R']
+     - ${automation.logdir}\*.log
+     - ${automation.logdir2}\*.log
+  include_lines: ['[Ff]\s*[Ii]\s*[Nn]\s*[Ii]\s*[Ss]\s*[Hh]\s*[Ee]\s*[Dd]\s*[Rr]\s*[Uu]\s*[Nn]\s*[Nn]\s*[Ee]\s*[Rr]']
   tags: ["AUTOMATION", "AUTOMATION-FINISHED-RUNNER"]
+  scan_frequency: 1s
 
 - type: log
   paths:
-     - ${automation.logdir}\service.log
-     - ${automation.logdir2}\service.log
-  include_lines: ['F\s*A\s*I\s*L\s*E\s*D\s*S\s*T\s*A\s*G\s*E']
+     - ${automation.logdir}\*.log
+     - ${automation.logdir2}\*.log
+  include_lines: ['[Ff]\s*[Aa]\s*[Ii]\s*[Ll]\s*[Ee]\s*[Dd]\s*[Ss]\s*[Tt]\s*[Aa]\s*[Gg]\s*[Ee]']
   tags: ["AUTOMATION", "AUTOMATION-FAILED-STAGE"]
+  scan_frequency: 1s
 
 - type: log
   paths:
-     - ${automation.logdir}\service.log
-     - ${automation.logdir2}\service.log
-  include_lines: ['F\s*I\s*N\s*I\s*S\s*H\s*E\s*D\s*S\s*T\s*A\s*G\s*E']
+     - ${automation.logdir}\*.log
+     - ${automation.logdir2}\*.log
+  include_lines: ['[Ff]\s*[Ii]\s*[Nn]\s*[Ii]\s*[Ss]\s*[Hh]\s*[Ee]\s*[Dd]\s*[Ss]\s*[Tt]\s*[Aa]\s*[Gg]\s*[Ee]']
   tags: ["AUTOMATION", "AUTOMATION-FINISHED-STAGE"]
+  scan_frequency: 1s
 
 - type: log
   paths:
-     - ${automation.logdir}\service.log
-     - ${automation.logdir2}\service.log
-  exclude_lines: ['S\s*T\s*A\s*R\s*T\s*I\s*N\s*G\s*R\s*U\s*N\s*N\s*E\s*R', 'S\s*T\s*A\s*R\s*T\s*I\s*N\s*G\s*S\s*T\s*A\s*G\s*E', 'F\s*A\s*I\s*L\s*E\s*D\s*R\s*U\s*N\s*N\s*E\s*R', 'F\s*I\s*N\s*I\s*S\s*H\s*E\s*D\s*R\s*U\s*N\s*N\s*E\s*R', 'F\s*A\s*I\s*L\s*E\s*D\s*S\s*T\s*A\s*G\s*E', 'F\s*I\s*N\s*I\s*S\s*H\s*E\s*D\s*S\s*T\s*A\s*G\s*E', '-\s*i\s*t\s*e\s*m\s*p\s*r\s*o\s*c\s*e\s*s\s*s\s*e\s*d\s*:']
+     - ${automation.logdir}\*.log
+     - ${automation.logdir2}\*.log
+  exclude_lines: ['[Ff]\s*[Ii]\s*[Nn]\s*[Ii]\s*[Ss]\s*[Hh]\s*[Ee]\s*[Dd]\s*[Rr]\s*[Uu]\s*[Nn]\s*[Nn]\s*[Ee]\s*[Rr]']
+  exclude_lines: ['[Ss]\s*[Tt]\s*[Aa]\s*[Rr]\s*[Tt]\s*[Ii]\s*[Nn]\s*[Gg]\s*[Rr]\s*[Uu]\s*[Nn]\s*[Nn]\s*[Ee]\s*[Rr]']
+  exclude_lines: ['[Ss]\s*[Tt]\s*[Aa]\s*[Rr]\s*[Tt]\s*[Ii]\s*[Nn]\s*[Gg]\s*[Ss]\s*[Tt]\s*[Aa]\s*[Gg]\s*[Ee]']
+  exclude_lines: ['[Ff]\s*[Aa]\s*[Ii]\s*[Ll]\s*[Ee]\s*[Dd]\s*[Ss]\s*[Tt]\s*[Aa]\s*[Gg]\s*[Ee]']
+  exclude_lines: ['[Ff]\s*[Ii]\s*[Nn]\s*[Ii]\s*[Ss]\s*[Hh]\s*[Ee]\s*[Dd]\s*[Ss]\s*[Tt]\s*[Aa]\s*[Gg]\s*[Ee]']
+  exclude_lines: ['[Ff]\s*[Aa]\s*[Ii]\s*[Ll]\s*[Ee]\s*[Dd]\s*[Rr]\s*[Uu]\s*[Nn]\s*[Nn]\s*[Ee]\s*[Rr]']
+  exclude_lines: ['"\s*[Pp]\s*[Rr]\s*[Oo]\s*[Cc]\s*[Ee]\s*[Ss]\s*[Ss]\s*[Ee]\s*[Dd]\s*[Ii]\s*[Tt]\s*[Ee]\s*[Mm]\s*"']
   tags: ["AUTOMATION"]
+  scan_frequency: 1s
 
 filebeat.config.modules:
   path: ${path.config}/modules.d/*.yml

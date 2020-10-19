@@ -1,0 +1,42 @@
+apm-server:
+
+  host: "127.0.0.1:8200"
+
+
+
+
+
+
+  rum:
+    enabled: true
+    apm-server.rum.event_rate.limit: 300
+    apm-server.rum.event_rate.lru_size: 1000
+    apm-server.rum.allow_origins: ['*']
+    apm-server.rum.source_mapping.enabled: true
+    apm-server.rum.source_mapping.cache.expiration: 5m
+    apm-server.rum.source_mapping.index_pattern: "apm-*-sourcemap*"
+
+
+  kibana:
+
+    enabled: true
+
+
+    host: "172.16.85.248:5601"
+
+
+
+
+
+  ilm:
+
+    enabled: "auto"
+
+
+
+output.logstash:
+
+  enabled: true
+
+
+  hosts: ["localhost:5044"]
