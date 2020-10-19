@@ -6,9 +6,9 @@ api:
         hostname: dev01
         operatingSystem: windows
         
-        # Specify username and password for non-AD environment
-        #username: user
-        #password: secret
+        # Specify username and password is required from release 20
+        username: user
+        password: secret
 
         # Specify path to nuix for the sever
         nuixPath: C:\Program Files\Nuix\Nuix 8.4

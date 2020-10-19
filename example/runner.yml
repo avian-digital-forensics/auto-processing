@@ -96,3 +96,7 @@ api:
       # - -java.io.tmpdir=<tempfolder>\javatmp
       # - -Dnuix.worker.tmpdir=<tempfolder>\workertemp
       # - -Dnuix.logdir=<logfolder> ## Remember to change filebeat config if changing logdir
+
+      # Switches for the APM for montoring with elastic
+      # - "-javaagent:c:\\java\\elastic-apm-agent.jar"
+      # - "-Dnuix.thread.workers=true"
