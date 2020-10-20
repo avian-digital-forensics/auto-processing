@@ -949,6 +949,8 @@ type Server struct {
 	Password string `json:"password" yaml:"password"`
 	// NuixPath to know where to run Nuix
 	NuixPath string `json:"nuixPath" yaml:"nuixPath"`
+	// AvianScripts path to the avian-scripts
+	AvianScripts string `json:"avianScripts" yaml:"avianScripts"`
 	// Active - if the server has an active job
 	Active bool `json:"active" yaml:"active"`
 }
@@ -961,6 +963,7 @@ type ServerApplyRequest struct {
 	Username        string `json:"username" yaml:"username"`
 	Password        string `json:"password" yaml:"password"`
 	NuixPath        string `json:"nuixPath" yaml:"nuixPath"`
+	AvianScripts    string `json:"avianScripts" yaml:"avianScripts"`
 }
 
 // ServerApplyResponse is the output-object for Apply in the server-service

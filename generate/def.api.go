@@ -36,6 +36,9 @@ type Server struct {
 	// NuixPath to know where to run Nuix
 	NuixPath string
 
+	// AvianScripts path to the avian-scripts
+	AvianScripts string
+
 	// Active - if the server has an active job
 	Active bool
 }
@@ -49,6 +52,7 @@ type ServerApplyRequest struct {
 	Username        string
 	Password        string
 	NuixPath        string
+	AvianScripts    string
 }
 
 // ServerApplyResponse is the output-object
