@@ -11,17 +11,16 @@ require 'time'
 
 STDOUT.puts('STARTING RUNNER')
 
-# create http-client to the server
-@url = URI('<%= remoteAddress %>')
-@http = Net::HTTP.new(@url.host, @url.port);
-
 def send_request(method, body)
   begin
-    uri = "%sRunnerService.%s" % [@url, method]
+    # create http-client to the server
+    url = URI('<%= remoteAddress %>')
+    http = Net::HTTP.new(url.host, url.port)
+    uri = "%sRunnerService.%s" % [url, method]
     request = Net::HTTP::Post.new(uri)
     request.body = body.to_json
     request["Content-Type"] = "application/json"
-    @http.request(request)
+    http.request(request)
 
   rescue => e
     # Handle the exception
