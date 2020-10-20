@@ -85,7 +85,8 @@ func (s *Stage) Nil() bool {
 		s.Exclude == nil &&
 		s.Reload == nil &&
 		s.Populate == nil &&
-		s.Ocr == nil)
+		s.Ocr == nil &&
+		s.InApp == nil)
 }
 
 // Validate validates a Stage
@@ -159,6 +160,16 @@ func (s *Stage) Validate() error {
 			return errors.New("must specify a reason for exclude-stage")
 		}
 	}
+
+	if s.InApp != nil {
+		if emptyString(s.InApp.Name) {
+			return errors.New("must specify a name for in-app script")
+		}
+		if emptyString(s.InApp.Config) {
+			return errors.New("must specify a config for in-app script")
+		}
+
+	}
 	return nil
 }
 
@@ -200,6 +211,10 @@ func (r *Runner) Paths() []string {
 
 		if stage.Reload != nil {
 			paths = append(paths, stage.Reload.ProfilePath)
+		}
+
+		if stage.InApp != nil {
+			paths = append(paths, stage.InApp.Config)
 		}
 	}
 	return paths

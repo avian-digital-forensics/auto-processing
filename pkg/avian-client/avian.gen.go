@@ -1275,6 +1275,23 @@ type File struct {
 	Path string `json:"path" yaml:"path"`
 }
 
+// InApp script as a stage
+type InApp struct {
+	datastore.Base
+
+	// StageID foreign-key for stage-table
+	StageID uint `json:"stageID" yaml:"stageID"`
+
+	// Name for in-app script
+	Name string `json:"name" yaml:"name"`
+
+	// Config for in-app script
+	Config string `json:"config" yaml:"config"`
+
+	// Status for the stage
+	Status int64 `json:"status" yaml:"status"`
+}
+
 // Licence holds information about licences in Nuix Management Server
 type Licence struct {
 	datastore.Base
@@ -1684,6 +1701,9 @@ type Stage struct {
 
 	// Reload reloads items in a Nuix-case based on a search
 	Reload *Reload `json:"reload" yaml:"reload"`
+
+	// InApp is a stage for avian in-app scripts
+	InApp *InApp `json:"inApp" yaml:"inApp"`
 }
 
 type StageResponse struct {

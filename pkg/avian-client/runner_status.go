@@ -56,6 +56,10 @@ func StageState(s *api.Stage) int64 {
 		return s.Populate.Status
 	}
 
+	if s.InApp != nil {
+		return s.InApp.Status
+	}
+
 	return 0
 }
 
@@ -82,6 +86,10 @@ func (s *Stage) Status() string {
 
 	if s.Populate != nil {
 		return getStatus(s.Populate.Status)
+	}
+
+	if s.InApp != nil {
+		return getStatus(s.InApp.Status)
 	}
 
 	return "Unknown"
@@ -112,6 +120,10 @@ func Name(s *api.Stage) string {
 		return "Populate"
 	}
 
+	if s.InApp != nil {
+		return s.InApp.Name
+	}
+
 	return "Unknown"
 }
 
@@ -140,6 +152,10 @@ func (s *Stage) Name() string {
 		return "Populate"
 	}
 
+	if s.InApp != nil {
+		return s.InApp.Name
+	}
+
 	return "Unknown"
 }
 
@@ -158,6 +174,8 @@ func SetStatusRunning(stage *api.Stage) {
 		stage.Populate.Status = StatusRunning
 	} else if stage.Ocr != nil {
 		stage.Ocr.Status = StatusRunning
+	} else if stage.InApp != nil {
+		stage.InApp.Status = StatusRunning
 	}
 	return
 }
@@ -175,6 +193,8 @@ func SetStatusFailed(stage *api.Stage) {
 		stage.Populate.Status = StatusFailed
 	} else if stage.Ocr != nil {
 		stage.Ocr.Status = StatusFailed
+	} else if stage.InApp != nil {
+		stage.InApp.Status = StatusFailed
 	}
 }
 
@@ -191,6 +211,8 @@ func SetStatusFinished(stage *api.Stage) {
 		stage.Populate.Status = StatusFinished
 	} else if stage.Ocr != nil {
 		stage.Ocr.Status = StatusFinished
+	} else if stage.InApp != nil {
+		stage.InApp.Status = StatusFinished
 	}
 }
 
@@ -207,6 +229,8 @@ func HasFinished(s *api.Stage) bool {
 		return Finished(s.Populate.Status)
 	} else if s.Ocr != nil {
 		return Finished(s.Ocr.Status)
+	} else if s.InApp != nil {
+		return Finished(s.InApp.Status)
 	}
 	return false
 }

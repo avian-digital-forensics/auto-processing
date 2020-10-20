@@ -516,6 +516,9 @@ type Stage struct {
 
 	// Reload reloads items in a Nuix-case based on a search
 	Reload *Reload
+
+	// InApp is a stage for avian in-app scripts
+	InApp *InApp
 }
 
 // Process -stage processes data into a Nuix-case
@@ -685,4 +688,22 @@ type File struct {
 
 	// Path for where the file is located at
 	Path string
+}
+
+// InApp script as a stage
+type InApp struct {
+	// Base for the datastore
+	datastore.Base
+
+	// StageID foreign-key for stage-table
+	StageID uint
+
+	// Name for in-app script
+	Name string
+
+	// Config for in-app script
+	Config string
+
+	// Status for the stage
+	Status int64
 }
