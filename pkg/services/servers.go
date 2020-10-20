@@ -46,10 +46,9 @@ func (s ServerService) Apply(ctx context.Context, r api.ServerApplyRequest) (*ap
 		logger.Debug("Server already exist - will update instead of create new")
 	}
 
-	// Test connection and install websocket to the server
-	// if it is a new server or the nuix-path has been changed
+	// Test connection
 	logger.Debug("Checking if the server should be tested or not")
-	if newSrv.ID == 0 || newSrv.NuixPath != r.NuixPath {
+	if newSrv.ID == 0 {
 		logger.Debug("Testing the server")
 
 		// create the client
@@ -59,22 +58,38 @@ func (s ServerService) Apply(ctx context.Context, r api.ServerApplyRequest) (*ap
 			logger.Error("Failed to create remote-client for powershell", zap.String("exception", err.Error()))
 			return nil, fmt.Errorf("failed to create remote-client for powershell: %v", err)
 		}
-
 		// close the client on exit
 		defer session.Close()
 
-		if err := session.CheckPath(r.NuixPath); err != nil {
-			logger.Error("Failed to test NuixPath for server", zap.String("exception", err.Error()))
-			return nil, fmt.Errorf("failed to test nuix-path for server: %v", err)
-		}
-
-		logger.Debug("Path is ok for server")
 		logger.Debug("Enabling CredSSP")
 		if err := session.EnableCredSSP(); err != nil {
 			logger.Error("Failed to enable CredSSP", zap.String("exception", err.Error()))
 			return nil, fmt.Errorf("failed to enable credssp: %v", err)
 		}
+	}
 
+	session, err := s.shell.NewSessionCredSSP(r.Hostname, r.Username, r.Password)
+	if err != nil {
+		logger.Error("Failed to create remote-client for powershell with CredSSP", zap.String("exception", err.Error()))
+		return nil, fmt.Errorf("failed to create remote-client for powershell: %v", err)
+	}
+	defer session.Close()
+
+	if newSrv.NuixPath != r.NuixPath {
+		if err := session.CheckPath(r.NuixPath); err != nil {
+			logger.Error("Failed to test NuixPath for server", zap.String("exception", err.Error()))
+			return nil, fmt.Errorf("failed to test nuix-path for server: %v", err)
+		}
+		logger.Debug("Nuix-path is ok for server")
+	}
+
+	if newSrv.AvianScripts != r.AvianScripts {
+		if err := session.CheckPath(r.AvianScripts); err != nil {
+			logger.Error("Failed to test AvianScripts-path for server", zap.String("exception", err.Error()))
+			return nil, fmt.Errorf("failed to test nuix-path for server: %v", err)
+		}
+
+		logger.Debug("Avian-scripts path is ok for server")
 	}
 
 	// Set data to the new Server-model
@@ -84,6 +99,7 @@ func (s ServerService) Apply(ctx context.Context, r api.ServerApplyRequest) (*ap
 	newSrv.Password = r.Password
 	newSrv.OperatingSystem = r.OperatingSystem
 	newSrv.NuixPath = r.NuixPath
+	newSrv.AvianScripts = r.AvianScripts
 
 	// Save the new NMS to the DB
 	logger.Info("Saving server to the DB")
