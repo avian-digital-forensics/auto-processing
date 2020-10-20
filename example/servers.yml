@@ -3,7 +3,7 @@ api:
     # Servers available for remote connection
     - server:
         # Specify hostname and os for server
-        hostname: dev01
+        hostname: dev01.avian.dk
         operatingSystem: windows
         
         # Specify username and password is required from release 20
@@ -12,6 +12,8 @@ api:
 
         # Specify path to nuix for the sever
         nuixPath: C:\Program Files\Nuix\Nuix 8.4
+
+        avianScripts: C:\t
 
     # Specify another server
     - server:
