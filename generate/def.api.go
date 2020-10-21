@@ -245,6 +245,9 @@ type RunnerService interface {
 
 	// Heartbeat sends a heartbeat for the api
 	Heartbeat(RunnerStartRequest) RunnerStartResponse
+
+	// Script returns the script for the runner
+	Script(RunnerGetRequest) RunnerScriptResponse
 }
 
 // Runner holds the information for a specific runner
@@ -374,6 +377,12 @@ type RunnerDeleteRequest struct {
 // RunnerDeleteResponse is the output-object
 // for deleting a runner by name
 type RunnerDeleteResponse struct{}
+
+// RunnerScriptResponse is the output-object
+// for GetScript
+type RunnerScriptResponse struct {
+	Script string
+}
 
 // RunnerStartRequest is the input-object
 // for starting a runner by id

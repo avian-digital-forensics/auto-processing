@@ -947,6 +947,61 @@ func (s *RunnerService) LogItem(ctx context.Context, r LogItemRequest) (*LogResp
 	return &response.LogResponse, nil
 }
 
+// Script returns the script for the runner
+func (s *RunnerService) Script(ctx context.Context, r RunnerGetRequest) (*RunnerScriptResponse, error) {
+	requestBodyBytes, err := json.Marshal(r)
+	if err != nil {
+		return nil, errors.Wrap(err, "RunnerService.Script: marshal RunnerGetRequest")
+	}
+	signature, err := generateSignature(requestBodyBytes, s.client.secret)
+	if err != nil {
+		return nil, errors.Wrap(err, "RunnerService.Script: generate signature RunnerGetRequest")
+	}
+	url := s.client.RemoteHost + "RunnerService.Script"
+	s.client.Debug(fmt.Sprintf("POST %s", url))
+	s.client.Debug(fmt.Sprintf(">> %s", string(requestBodyBytes)))
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(requestBodyBytes))
+	if err != nil {
+		return nil, errors.Wrap(err, "RunnerService.Script: NewRequest")
+	}
+	req.Header.Set("X-API-SIGNATURE", signature)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept-Encoding", "gzip")
+	req = req.WithContext(ctx)
+	resp, err := s.client.HTTPClient.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "RunnerService.Script")
+	}
+	defer resp.Body.Close()
+	var response struct {
+		RunnerScriptResponse
+		Error string
+	}
+	var bodyReader io.Reader = resp.Body
+	if strings.Contains(resp.Header.Get("Content-Encoding"), "gzip") {
+		decodedBody, err := gzip.NewReader(resp.Body)
+		if err != nil {
+			return nil, errors.Wrap(err, "RunnerService.Script: new gzip reader")
+		}
+		defer decodedBody.Close()
+		bodyReader = decodedBody
+	}
+	respBodyBytes, err := ioutil.ReadAll(bodyReader)
+	if err != nil {
+		return nil, errors.Wrap(err, "RunnerService.Script: read response body")
+	}
+	if err := json.Unmarshal(respBodyBytes, &response); err != nil {
+		if resp.StatusCode != http.StatusOK {
+			return nil, errors.Errorf("RunnerService.Script: (%d) %v", resp.StatusCode, string(respBodyBytes))
+		}
+		return nil, err
+	}
+	if response.Error != "" {
+		return nil, errors.New(response.Error)
+	}
+	return &response.RunnerScriptResponse, nil
+}
+
 // Start sets a runner to started
 func (s *RunnerService) Start(ctx context.Context, r RunnerStartRequest) (*RunnerStartResponse, error) {
 	requestBodyBytes, err := json.Marshal(r)
@@ -1666,6 +1721,11 @@ type RunnerListRequest struct {
 // RunnerListResponse is the input-object for listing the runners from the backend
 type RunnerListResponse struct {
 	Runners []Runner `json:"runners" yaml:"runners"`
+}
+
+// RunnerScriptResponse is the output-object for GetScript
+type RunnerScriptResponse struct {
+	Script string `json:"script" yaml:"script"`
 }
 
 type StageRequest struct {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/avian-digital-forensics/auto-processing/generate/ruby"
 	api "github.com/avian-digital-forensics/auto-processing/pkg/avian-api"
 	avian "github.com/avian-digital-forensics/auto-processing/pkg/avian-client"
 	"github.com/avian-digital-forensics/auto-processing/pkg/logging"
@@ -666,4 +667,16 @@ func (s RunnerService) RemoveScript(runner api.Runner) error {
 		return fmt.Errorf("Failed to set nuix-path in ps-session: %s - %v", runner.Hostname, err.Error())
 	}
 	return nil
+}
+
+func (s RunnerService) Script(ctx context.Context, r api.RunnerGetRequest) (*api.RunnerScriptResponse, error) {
+	var runner = api.Runner{Name: r.Name}
+	if err := getPreloadedRunner(s.DB, &runner); err != nil {
+		return nil, err
+	}
+	script, err := ruby.Generate("", runner)
+	if err != nil {
+		return nil, err
+	}
+	return &api.RunnerScriptResponse{Script: script}, nil
 }

@@ -9,9 +9,9 @@ import (
 
 	"github.com/pacedotdev/oto/otohttp"
 
-	time "time"
-
 	datastore "github.com/avian-digital-forensics/auto-processing/pkg/datastore"
+
+	time "time"
 )
 
 // NmsService handles the Nuix Management Servers
@@ -50,6 +50,8 @@ type RunnerService interface {
 	LogInfo(context.Context, LogRequest) (*LogResponse, error)
 	// LogItem logs an item
 	LogItem(context.Context, LogItemRequest) (*LogResponse, error)
+	// Script returns the script for the runner
+	Script(context.Context, RunnerGetRequest) (*RunnerScriptResponse, error)
 	// Start sets a runner to started
 	Start(context.Context, RunnerStartRequest) (*RunnerStartResponse, error)
 	// StartStage sets a stage to Active
@@ -156,6 +158,7 @@ func RegisterRunnerService(server *otohttp.Server, runnerService RunnerService) 
 	server.Register("RunnerService", "LogError", handler.handleLogError)
 	server.Register("RunnerService", "LogInfo", handler.handleLogInfo)
 	server.Register("RunnerService", "LogItem", handler.handleLogItem)
+	server.Register("RunnerService", "Script", handler.handleScript)
 	server.Register("RunnerService", "Start", handler.handleStart)
 	server.Register("RunnerService", "StartStage", handler.handleStartStage)
 }
@@ -383,6 +386,24 @@ func (s *runnerServiceServer) handleLogItem(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	response, err := s.runnerService.LogItem(r.Context(), request)
+	if err != nil {
+		log.Println("TODO: oto service error:", err)
+		s.server.OnErr(w, r, err)
+		return
+	}
+	if err := otohttp.Encode(w, r, http.StatusOK, response); err != nil {
+		s.server.OnErr(w, r, err)
+		return
+	}
+}
+
+func (s *runnerServiceServer) handleScript(w http.ResponseWriter, r *http.Request) {
+	var request RunnerGetRequest
+	if err := otohttp.Decode(r, &request); err != nil {
+		s.server.OnErr(w, r, err)
+		return
+	}
+	response, err := s.runnerService.Script(r.Context(), request)
 	if err != nil {
 		log.Println("TODO: oto service error:", err)
 		s.server.OnErr(w, r, err)
@@ -884,6 +905,13 @@ type RunnerListRequest struct {
 // RunnerListResponse is the input-object for listing the runners from the backend
 type RunnerListResponse struct {
 	Runners []Runner `json:"runners" yaml:"runners"`
+	// Error is string explaining what went wrong. Empty if everything was fine.
+	Error string `json:"error,omitempty" yaml:"error,omitempty"`
+}
+
+// RunnerScriptResponse is the output-object for GetScript
+type RunnerScriptResponse struct {
+	Script string `json:"script" yaml:"script"`
 	// Error is string explaining what went wrong. Empty if everything was fine.
 	Error string `json:"error,omitempty" yaml:"error,omitempty"`
 }

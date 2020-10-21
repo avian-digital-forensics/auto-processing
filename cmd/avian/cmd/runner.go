@@ -88,6 +88,18 @@ var runnerDeleteCmd = &cobra.Command{
 	},
 }
 
+// runnerScriptCmd represents the delete runner command
+var runnerScriptCmd = &cobra.Command{
+	Use:   "script",
+	Short: "Returns the script for the specified runner (specified by name)",
+	Args:  cobra.MinimumNArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := scriptRunner(context.Background(), args[0]); err != nil {
+			fmt.Fprintf(os.Stderr, "could not get the script for runner from backend: %v\n", err)
+		}
+	},
+}
+
 var (
 	runnerService *avian.RunnerService
 	forceDelete   bool
@@ -118,6 +130,7 @@ func init() {
 	runnersCmd.AddCommand(runnersListCmd)
 	runnersCmd.AddCommand(runnerStagesCmd)
 	runnersCmd.AddCommand(runnerDeleteCmd)
+	runnersCmd.AddCommand(runnerScriptCmd)
 	runnerDeleteCmd.Flags().BoolVar(&forceDelete, "force", false, "force deleting an active runner")
 	runnersApplyCmd.Flags().BoolVar(&forceApply, "force", false, "force applying a runner")
 }
@@ -205,5 +218,15 @@ func deleteRunner(ctx context.Context, runner string) error {
 	}
 
 	fmt.Fprintf(os.Stdout, "Runner: %s has been deleted", runner)
+	return nil
+}
+
+func scriptRunner(ctx context.Context, runner string) error {
+	resp, err := runnerService.Script(ctx, avian.RunnerGetRequest{Name: runner})
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprintf(os.Stdout, "%s", resp.Script)
 	return nil
 }
