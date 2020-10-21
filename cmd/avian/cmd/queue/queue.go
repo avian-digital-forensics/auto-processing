@@ -1,8 +1,10 @@
 package queue
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -246,6 +248,22 @@ func (r *run) handle(err error) {
 	// handle the error
 	if err != nil {
 		logger.Error("Runner failed", zap.String("exception", nuixError(err).Error()))
+
+		port := os.Getenv("AVIAN_PORT")
+		if port == "" {
+			port = "8080"
+		}
+		url := fmt.Sprintf("http://%s:%s/oto/", "localhost", port)
+
+		runnerService := avian.NewRunnerService(avian.New(url, "hej"))
+		runnerService.Failed(
+			context.Background(),
+			avian.RunnerFailedRequest{
+				ID:        r.runner.ID,
+				Runner:    r.runner.Name,
+				Exception: err.Error(),
+			},
+		)
 		return
 	}
 	logger.Debug("Runner is executing")
@@ -258,7 +276,6 @@ func (r *run) close() error {
 	}
 	r.queue.logger.Debug("Closing runner ps-session", zap.String("runner", r.runner.Name))
 
-	r.session.Close()
 	r.session = nil
 	r.queue = nil
 	r.runner = nil
