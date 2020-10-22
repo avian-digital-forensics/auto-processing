@@ -66,11 +66,13 @@ func Generate(remoteAddress string, runner api.Runner) (string, error) {
 	})
 
 	ctx.Set("getStages", func(r api.Runner) []*api.Stage { return r.Stages })
+	ctx.Set("isProcess", func(s *api.Stage) bool { return s.Process != nil && !avian.Finished(s.Process.Status) })
 	ctx.Set("searchAndTag", func(s *api.Stage) bool { return s.SearchAndTag != nil && !avian.Finished(s.SearchAndTag.Status) })
 	ctx.Set("exclude", func(s *api.Stage) bool { return s.Exclude != nil && !avian.Finished(s.Exclude.Status) })
 	ctx.Set("ocr", func(s *api.Stage) bool { return s.Ocr != nil && !avian.Finished(s.Ocr.Status) })
 	ctx.Set("populate", func(s *api.Stage) bool { return s.Populate != nil && !avian.Finished(s.Populate.Status) })
 	ctx.Set("reload", func(s *api.Stage) bool { return s.Reload != nil && !avian.Finished(s.Reload.Status) })
+	ctx.Set("inApp", func(s *api.Stage) bool { return s.InApp != nil && !avian.Finished(s.InApp.Status) })
 	ctx.Set("stageName", func(s *api.Stage) string { return avian.Name(s) })
 	ctx.Set("formatQuotes", func(s string) template.HTML { return template.HTML(s) })
 

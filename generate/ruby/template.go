@@ -289,13 +289,14 @@ rescue => e
   failed_runner(e)
   exit(false)
 end
-<% } %><%= for (i, s) in getStages(runner) { %><%= if (searchAndTag(s)) { %>
-# Start stage: <%= i %>
+<% } %><%= for (i, s) in getStages(runner) { %><%= if (!isProcess(s)) { %> 
+# Start stage: <%= i %> - <%= stageName(s) %>
 begin
-  # Start SearchAndTag-stage (update api)
+  # Start <%= stageName(s) %>-stage (update api)
   start(<%= s.ID %>)
+  log_info('<%= stageName(s) %>', <%= s.ID %>, 'Starting <%= stageName(s) %>-stage')
 
-  log_info('<%= stageName(s) %>', <%= s.ID %>, 'Starting SearchAndTag-stage')<%= if (len(s.SearchAndTag.Files) != 0) { %>
+  <%= if (searchAndTag(s)) { %><%= if (len(s.SearchAndTag.Files) != 0) { %>
   # Search And Tag with files
   log_info('<%= stageName(s) %>', <%= s.ID %>, 'Creating bulk-searcher')
   bulk_searcher = single_case.create_bulk_searcher
@@ -311,85 +312,17 @@ begin
     row_num += 1
     log_item('<%= stageName(s) %>', <%= s.ID %>, 'Searching through row - current size: #{info.current_size} - total size: #{info.total_size}', row_num, '', '', '')
   end
-<% } else { %>
+  <% } else { %>
   # Search And Tag with search-query
   items = single_case.search('<%= formatQuotes(s.SearchAndTag.Search) %>')
   log_debug('<%= stageName(s) %>', <%= s.ID %>, "Found #{items.length} from search <%= s.SearchAndTag.Search %> - starts tagging")
   item_count = 0
   for item in items
-    item.add_tag('<%= s.SearchAndTag.Tag %>')
-    item_count += 1
-    log_item('<%= stageName(s) %>', <%= s.ID %>, 'Tagged item', item_count, item.type.name, item.guid, '')
+  item.add_tag('<%= s.SearchAndTag.Tag %>')
+  item_count += 1
+  log_item('<%= stageName(s) %>', <%= s.ID %>, 'Tagged item', item_count, item.type.name, item.guid, '')
   end
-<% } %>
-  # Finish the SearchAndTag-stage (update api)
-  log_debug('<%= stageName(s) %>', <%= s.ID %>, 'Finished')
-  finish(<%= s.ID %>)
-rescue => e
-  # Handle the exception for stage
-  
-  # Set the SearchAndTag-stage to failed (update api)
-  failed(<%= s.ID %>)
-  <%= if (process(runner)) { %>
-  # Tear down the cases
-  tear_down(single_case, compound_case, review_compound)
-  <% } else { %>
-  # Tear down the single-case
-  tear_down(single_case, nil, nil)
-  <% } %>
-  log_error('<%= stageName(s) %>', <%= s.ID %>, 'Failed', e)
-  STDOUT.puts('FINISHED RUNNER')
-  STDERR.puts("Failed to run stage <%= stageName(s) %> id <%= s.ID %> : #{e}")
-  failed_runner(e)
-  exit(false)
-end
-<% } else if (exclude(s)) { %>
-# Start stage: <%= i %>
-begin
-  # Start Exclude-stage (update api)
-  start(<%= s.ID %>)
-
-  # Exclude with reason
-  log_info('<%= stageName(s) %>', <%= s.ID %>, 'Starting Exclude-stage')
-  items = single_case.search('<%= formatQuotes(s.Exclude.Search) %>')
-  log_debug('<%= stageName(s) %>', <%= s.ID %>, "Found #{items.length} from search <%= s.Exclude.Search %> - starts excluding")
-  item_count = 0
-  for item in items
-    item.exclude('<%= s.Exclude.Reason %>')
-    item_count += 1
-    log_item('<%= stageName(s) %>', <%= s.ID %>, 'Excluded item', item_count, item.type.name, item.guid, '')
-  end
-  # Finish the Exclude-stage (update api)
-  log_info('<%= stageName(s) %>', <%= s.ID %>, 'Finished')
-  finish(<%= s.ID %>)
-rescue => e
-  # Handle the exception for stage
-
-  # Set the Exclude-stage to failed (update api)
-  failed(<%= s.ID %>)
-  <%= if (process(runner)) { %>
-  # Tear down the cases
-  tear_down(single_case, compound_case, review_compound)
-  <% } else { %>
-  # Tear down the single-case
-  tear_down(single_case, nil, nil)
-  <% } %>
-  log_error('<%= stageName(s) %>', <%= s.ID %>, 'Failed', e)
-  STDOUT.puts('FINISHED RUNNER')
-  STDERR.puts("Failed to run stage <%= stageName(s) %> id <%= s.ID %> : #{e}")
-  failed_runner(e)
-  exit(false)
-end
-<% } else if (ocr(s)) { %>
-# Start stage: <%= i %>
-begin
-  # Start OCR-stage (update api)
-  start(<%= s.ID %>)
-
-  # Ocr
-  log_info('<%= stageName(s) %>', <%= s.ID %>, 'Starting OCR-stage')
-  log_info('<%= stageName(s) %>', <%= s.ID %>, 'Creating OCR-processor')
-  ocr_processor = $utilities.createOcrProcessor
+  <% } %><% } %><%= if (ocr(s)) { %>ocr_processor = $utilities.createOcrProcessor
 
   # Check if the profile exists in the store
   unless $utilities.get_ocr_profile_store.contains_profile('<%= s.Ocr.Profile %>')
@@ -399,7 +332,7 @@ begin
     $utilities.get_ocr_profile_store.import_profile('<%= s.Ocr.ProfilePath %>', '<%= s.Ocr.Profile %>')
     log_debug('<%= stageName(s) %>', <%= s.ID %>, 'OCR-profile has been imported')
   end
-
+  
   ocr_profile = $utilities.get_ocr_profile_store.get_profile('<%= s.Ocr.Profile %>')
   ocr_items = single_case.search('<%= formatQuotes(s.Ocr.Search) %>')
   log_debug('<%= stageName(s) %>', <%= s.ID %>, "Found #{ocr_items.length} from search: <%= s.Ocr.Search %> - starts ocr")
@@ -410,60 +343,36 @@ begin
     ocr_sempahore = Mutex.new
     processed_approx_count = 0
     ocr_processor.when_item_event_occurs do |info|
-      ocr_sempahore.synchronize {
-        processed_approx_count += 1
-        log_item('<%= stageName(s) %>', <%= s.ID %>, 'OCR item', info.stage_count, info.item.type.name, info.item.guid, info.stage)
-      }
+    ocr_sempahore.synchronize {
+      processed_approx_count += 1
+      log_item('<%= stageName(s) %>', <%= s.ID %>, 'OCR item', info.stage_count, info.item.type.name, info.item.guid, info.stage)
+    }
     end
-
+  
     # variables to use for batched ocr
     batch_index = 0
     target_batch_size = 100
     total_batches = (ocr_items.size.to_f / target_batch_size.to_f).ceil
-
+  
     ocr_items.each_slice(target_batch_size) do |slice_items|
-      log_info('<%= stageName(s) %>', <%= s.ID %>, "Start ocr-processing batch : #{batch_index+1}/#{total_batches}")
-      ocr_processor.process(slice_items, ocr_profile)
-      batch_index += 1
+    log_info('<%= stageName(s) %>', <%= s.ID %>, "Start ocr-processing batch : #{batch_index+1}/#{total_batches}")
+    ocr_processor.process(slice_items, ocr_profile)
+    batch_index += 1
     end
-  end
-
-  # Finish the OCR-stage (update api)
-  log_info('<%= stageName(s) %>', <%= s.ID %>, 'Finished')
-  finish(<%= s.ID %>)
-rescue => e
-  # Handle the exception for stage
-
-  # Set the OCR-stage to failed (update api)
-  failed(<%= s.ID %>)
-  <%= if (process(runner)) { %>
-  # Tear down the cases
-  tear_down(single_case, compound_case, review_compound)
-  <% } else { %>
-  # Tear down the single-case
-  tear_down(single_case, nil, nil)
-  <% } %>
-  log_error('<%= stageName(s) %>', <%= s.ID %>, 'Failed', e)
-  STDOUT.puts('FINISHED RUNNER')
-  STDERR.puts("Failed to run stage <%= stageName(s) %> id <%= s.ID %> : #{e}")
-  failed_runner(e)
-  exit(false)
-end
-<% } else if (populate(s)) { %>
-# Start stage: <%= i %>
-begin
-  # Start Populate-stage (update api)
-  start(<%= s.ID %>)
-  log_info('<%= stageName(s) %>', <%= s.ID %>, 'Starting stage')
-
-  # Populate stage
-  tmpdir = Dir.tmpdir
+  end<% } %><%= if (exclude(s)) { %>items = single_case.search('<%= formatQuotes(s.Exclude.Search) %>')
+  log_debug('<%= stageName(s) %>', <%= s.ID %>, "Found #{items.length} from search <%= s.Exclude.Search %> - starts excluding")
+  item_count = 0
+  for item in items
+    item.exclude('<%= s.Exclude.Reason %>')
+    item_count += 1
+    log_item('<%= stageName(s) %>', <%= s.ID %>, 'Excluded item', item_count, item.type.name, item.guid, '')
+  end <% } %><%= if (populate(s)) { %> tmpdir = Dir.tmpdir
   dir = "#{tmpdir}/populate"
   unless Dir.exist?(dir)
     log_info('<%= stageName(s) %>', <%= s.ID %>, "Creating tmp-dir: #{dir} for export")
     FileUtils.mkdir_p(dir)
   end
-
+  
   log_info('<%= stageName(s) %>', <%= s.ID %>, 'Creating batch-exporter with tmp-dir for populate')
   exporter = $utilities.create_batch_exporter(dir)
   <%= for (t) in s.Populate.Types { %>
@@ -484,42 +393,77 @@ begin
   <% } %><% } %>
   items = single_case.search('<%= formatQuotes(s.Populate.Search) %>')
   log_debug('<%= stageName(s) %>', <%= s.ID %>, "Found #{items.length} items from search: <%= s.Populate.Search %> - starts export for populate")
-
+  
   # Used to synchronize thread access in batch exported callback
   semaphore = Mutex.new
-
+  
   # Setup batch exporter callback
   exporter.when_item_event_occurs do |info|
     if !info.failure.nil?
-      log_error('<%= stageName(s) %>', <%= s.ID %>, "Export failure for item: #{info.item.guid} : #{info.item.localised_name}", '')
+    log_error('<%= stageName(s) %>', <%= s.ID %>, "Export failure for item: #{info.item.guid} : #{info.item.localised_name}", '')
     end
     # Make the progress reporting have some thread safety
     semaphore.synchronize {
-      log_item('Populate', <%= s.ID %>, 'Exporting item', info.stage_count, info.item.type.name, info.item.guid, info.stage)
+    log_item('Populate', <%= s.ID %>, 'Exporting item', info.stage_count, info.item.type.name, info.item.guid, info.stage)
     }
   end
-
+  
   log_info('<%= stageName(s) %>', <%= s.ID %>, 'Starting export of items')
   exporter.export_items(items)
   log_debug('<%= stageName(s) %>', <%= s.ID %>, 'Finished export of items')
-
+  
   log_info('<%= stageName(s) %>', <%= s.ID %>, 'Removing tmp-dir')
   FileUtils.rm_rf(dir)
   log_debug('<%= stageName(s) %>', <%= s.ID %>, 'Removed tmp-dir')
+  <% } %><%= if (reload(s)) { %># Check if the profile exists in the profile-store
+    unless $utilities.get_processing_profile_store.contains_profile('<%= s.Reload.Profile %>')
+      # Import the profile
+      log_debug('<%= stageName(s) %>', <%= s.ID %>, 'Did not find the requested processing-profile for reload in the profile-store')
+      log_info('<%= stageName(s) %>', <%= s.ID %>, 'Importing new processing-profile from <%= s.Reload.ProfilePath %>')
+      $utilities.get_processing_profile_store.import_profile('<%= s.Reload.ProfilePath %>', '<%= s.Reload.Profile %>')
+      log_debug('<%= stageName(s) %>', <%= s.ID %>, 'Processing-profile has been imported')
+    end
+    
+    items = single_case.search('<%= formatQuotes(s.Reload.Search) %>')
+    log_debug('<%= stageName(s) %>', <%= s.ID %>, "Found #{items.length} items from search: <%= s.Reload.Search %>")
+    
+    log_info('<%= stageName(s) %>', <%= s.ID %>, 'Creating reload_processor')
+    reload_processor = single_case.create_processor
+    log_debug('<%= stageName(s) %>', <%= s.ID %>, 'Created reload_processor')
+    reload_processor.set_processing_profile('<%= s.Reload.Profile %>')
+    reload_processor.reload_items_from_source_data(items)
+    
+    # Handle item-information from reload-processor
+    sempahore = Mutex.new
+    reload_count = 0
+    reload_processor.when_item_processed do |info|
+      semaphore.synchronize {
+      reload_count += 1
+      log_item('Reload', <%= s.ID %>, 'Reloaded item', reload_count, info.mime_type, info.guid_path, '')
+      }
+    end
+    
+    # Start the processing
+    if items.length > 0
+      log_info('<%= stageName(s) %>', <%= s.ID %>, 'Starts the reload-processing')
+      reload_processor.process
+      log_debug('<%= stageName(s) %>', <%= s.ID %>, 'Finished the reload-processing')
+    else
+      log_debug('<%= stageName(s) %>', <%= s.ID %>, 'No items to process for reload')
+    end<% } %>
 
-  # Finish the Populate-stage (update api)
-  log_info('<%= stageName(s) %>', <%= s.ID %>, 'Finished')
+  # Finish the <%= stageName(s) %>-stage (update api)
   finish(<%= s.ID %>)
+  log_debug('<%= stageName(s) %>', <%= s.ID %>, 'Finished')
 rescue => e
   # Handle the exception for stage
-
-  # Set the Populate-stage to failed (update api)
+  # Set the <%= stageName(s) %>-stage to failed (update api)
   failed(<%= s.ID %>)
   <%= if (process(runner)) { %>
   # Tear down the cases
   tear_down(single_case, compound_case, review_compound)
   <% } else { %>
-  # Tear down the single-case
+  # Tear down the simple-case
   tear_down(single_case, nil, nil)
   <% } %>
   log_error('<%= stageName(s) %>', <%= s.ID %>, 'Failed', e)
@@ -528,72 +472,6 @@ rescue => e
   failed_runner(e)
   exit(false)
 end
-<% } else if (reload(s)) { %>
-# Start stage: <%= i %>
-begin
-  # Start Reload-stage (update api)
-  start(<%= s.ID %>)
-
-  # Reload stage
-  log_info('<%= stageName(s) %>', <%= s.ID %>, 'Starting Reload-stage')
-
-  # Check if the profile exists in the profile-store
-  unless $utilities.get_processing_profile_store.contains_profile('<%= s.Reload.Profile %>')
-    # Import the profile
-    log_debug('<%= stageName(s) %>', <%= s.ID %>, 'Did not find the requested processing-profile for reload in the profile-store')
-    log_info('<%= stageName(s) %>', <%= s.ID %>, 'Importing new processing-profile from <%= s.Reload.ProfilePath %>')
-    $utilities.get_processing_profile_store.import_profile('<%= s.Reload.ProfilePath %>', '<%= s.Reload.Profile %>')
-    log_debug('<%= stageName(s) %>', <%= s.ID %>, 'Processing-profile has been imported')
-  end
-
-  items = single_case.search('<%= formatQuotes(s.Reload.Search) %>')
-  log_debug('<%= stageName(s) %>', <%= s.ID %>, "Found #{items.length} items from search: <%= s.Reload.Search %>")
-  
-  log_info('<%= stageName(s) %>', <%= s.ID %>, 'Creating reload_processor')
-  reload_processor = single_case.create_processor
-  log_debug('<%= stageName(s) %>', <%= s.ID %>, 'Created reload_processor')
-  reload_processor.set_processing_profile('<%= s.Reload.Profile %>')
-  reload_processor.reload_items_from_source_data(items)
-  
-  # Handle item-information from reload-processor
-  sempahore = Mutex.new
-  reload_count = 0
-  reload_processor.when_item_processed do |info|
-    semaphore.synchronize {
-      reload_count += 1
-      log_item('Reload', <%= s.ID %>, 'Reloaded item', reload_count, info.mime_type, info.guid_path, '')
-    }
-  end
-  
-  # Start the processing
-  if items.length > 0
-    log_info('<%= stageName(s) %>', <%= s.ID %>, 'Starts the reload-processing')
-    reload_processor.process
-    log_debug('<%= stageName(s) %>', <%= s.ID %>, 'Finished the reload-processing')
-  else
-    log_debug('<%= stageName(s) %>', <%= s.ID %>, 'No items to process for reload')
-  end
-
-  # Finish the Reload-stage (update api)
-  log_debug('<%= stageName(s) %>', <%= s.ID %>, 'Finished')
-  finish(<%= s.ID %>)
-rescue => e
-  # Handle the exception for stage
-
-  # Set the Reload-stage to failed (update api)
-  failed(<%= s.ID %>)
-  <%= if (process(runner)) { %>
-  # Tear down the cases
-  tear_down(single_case, compound_case, review_compound)
-  <% } else { %>
-  # Tear down the single-case
-  tear_down(single_case, nil, nil)
-  <% } %>
-  log_error('<%= stageName(s) %>', <%= s.ID %>, 'Failed', e)
-  STDOUT.puts('FINISHED RUNNER')
-  STDERR.puts("Failed to run stage <%= stageName(s) %> id <%= s.ID %> : #{e}")
-  failed_runner(e)
-  exit(false)
-end<% } %><% } %><% } %><% } %>
+<% } %> <% } %>
 STDOUT.puts('FINISHED RUNNER')
 finish_runner`
