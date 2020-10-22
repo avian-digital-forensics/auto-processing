@@ -27,6 +27,7 @@ func Migrate(db *gorm.DB) error {
 		&api.Ocr{},
 		&api.File{},
 		&api.Type{},
+		&api.InApp{},
 	).Error
 }
 
