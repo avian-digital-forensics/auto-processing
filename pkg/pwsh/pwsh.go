@@ -29,6 +29,7 @@ func (s service) Close() error {
 }
 
 type Session interface {
+	CopyItemFromHost(src, dst string) error
 	CheckPath(path string) error
 	Close()
 	CreateFile(path, name string, data []byte) error
@@ -57,6 +58,14 @@ func (s service) NewSessionCredSSP(host, username, password string) (Session, er
 		powershell.WithAuthentication("CredSSP"),
 	)
 	return session{sess, s.shell, host}, err
+}
+
+// CopyItemFromHost copies the source-item from host to
+// the destination in session
+func (s session) CopyItemFromHost(src, dst string) error {
+	copyCmd := fmt.Sprintf("Copy-Item '%s' -Destination '%s' -Force -Recurse -ToSession $%s", src, dst, s.session.ID())
+	_, err := s.shell.Execute(copyCmd)
+	return err
 }
 
 func (s session) CheckPath(path string) error {
@@ -91,23 +100,7 @@ func (s session) CreateFile(path, name string, data []byte) error {
 		return err
 	}
 
-	// create the command for copying the file
-	copyCmd := fmt.Sprintf("Copy-Item '%s\\%s' -Destination '%s\\%s' -ToSession $%s",
-		wd,
-		file.Name(),
-		path,
-		name,
-		s.session.ID(),
-	)
-
-	// execute the command
-	_, err = s.shell.Execute(copyCmd)
-	if err != nil {
-		os.Remove(file.Name())
-		return err
-	}
-
-	return os.Remove(file.Name())
+	return s.CopyItemFromHost(fmt.Sprintf("%s\\%s", wd, file.Name()), fmt.Sprintf("%s\\%s", path, name))
 }
 
 func (s session) Echo(arg string) (string, error) {
@@ -119,7 +112,7 @@ func (s session) Echo(arg string) (string, error) {
 }
 
 func (s session) RemoveItem(path string) error {
-	_, err := s.session.Execute(fmt.Sprintf("Remove-Item -Path '%s' -Force", path))
+	_, err := s.session.Execute(fmt.Sprintf("Remove-Item -Path '%s' -Force -Recurse", path))
 	return err
 }
 
