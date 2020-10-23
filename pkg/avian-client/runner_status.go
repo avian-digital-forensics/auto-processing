@@ -121,7 +121,7 @@ func Name(s *api.Stage) string {
 	}
 
 	if s.InApp != nil {
-		return s.InApp.Name
+		return "InApp-" + s.InApp.Name
 	}
 
 	return "Unknown"
@@ -153,7 +153,7 @@ func (s *Stage) Name() string {
 	}
 
 	if s.InApp != nil {
-		return s.InApp.Name
+		return "InApp-" + s.InApp.Name
 	}
 
 	return "Unknown"

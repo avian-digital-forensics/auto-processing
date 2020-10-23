@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	datastore "github.com/avian-digital-forensics/auto-processing/pkg/datastore"
+	inapp "github.com/avian-digital-forensics/auto-processing/pkg/inapp"
 	"github.com/pkg/errors"
 	time "time"
 )
@@ -1342,6 +1343,9 @@ type InApp struct {
 
 	// Config for in-app script
 	Config string `json:"config" yaml:"config"`
+
+	// Settings decoded from the config-file provided in Config-field
+	Settings inapp.Settings `json:"settings" yaml:"settings"`
 
 	// Status for the stage
 	Status int64 `json:"status" yaml:"status"`

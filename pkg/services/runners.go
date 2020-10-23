@@ -205,6 +205,7 @@ func (s RunnerService) List(ctx context.Context, r api.RunnerListRequest) (*api.
 		Preload("Stages.Ocr").
 		Preload("Stages.Reload").
 		Preload("Stages.Populate").
+		Preload("Stages.InApp").
 		Find(&runners).Error
 	if err != nil {
 		s.logger.Error("Cannot get runners-list", zap.String("exception", err.Error()))
@@ -217,17 +218,8 @@ func (s RunnerService) List(ctx context.Context, r api.RunnerListRequest) (*api.
 func (s RunnerService) Get(ctx context.Context, r api.RunnerGetRequest) (*api.RunnerGetResponse, error) {
 	s.logger.Debug("Getting runner", zap.String("runner", r.Name))
 	var runner api.Runner
-	err := s.DB.Preload("Stages.Process").
-		Preload("Stages.SearchAndTag").
-		Preload("Stages.Exclude").
-		Preload("Stages.Ocr").
-		Preload("Stages.Reload").
-		Preload("Stages.Populate").
-		Preload("CaseSettings.Case").
-		Preload("CaseSettings.CompoundCase").
-		Preload("CaseSettings.ReviewCompound").
-		First(&runner, "name = ?", r.Name).Error
-	if err != nil {
+	runner.Name = r.Name
+	if err := getPreloadedRunner(s.DB, &runner); err != nil {
 		s.logger.Error("Cannot get runner", zap.String("runner", r.Name), zap.String("exception", err.Error()))
 		return nil, err
 	}
@@ -423,6 +415,7 @@ func (s RunnerService) StartStage(ctx context.Context, r api.StageRequest) (*api
 		Preload("Reload").
 		Preload("Populate").
 		Preload("Ocr").
+		Preload("InApp").
 		First(&stage, r.StageID).Error; err != nil {
 		logger.Error("Cannot get the requested stage", zap.String("exception", err.Error()))
 		return nil, fmt.Errorf("did not get requested stage : %v", err)
@@ -449,6 +442,7 @@ func (s RunnerService) FailedStage(ctx context.Context, r api.StageRequest) (*ap
 		Preload("Reload").
 		Preload("Populate").
 		Preload("Ocr").
+		Preload("InApp").
 		First(&stage, r.StageID).Error; err != nil {
 		logger.Error("Cannot get the requested stage", zap.String("exception", err.Error()))
 		return nil, fmt.Errorf("did not get requested stage : %v", err)
@@ -475,6 +469,7 @@ func (s RunnerService) FinishStage(ctx context.Context, r api.StageRequest) (*ap
 		Preload("Reload").
 		Preload("Populate").
 		Preload("Ocr").
+		Preload("InApp").
 		First(&stage, r.StageID).Error; err != nil {
 		logger.Error("Cannot get the requested stage", zap.String("exception", err.Error()))
 		return nil, fmt.Errorf("did not get requested stage : %v", err)
@@ -632,6 +627,7 @@ func getPreloadedRunner(db *gorm.DB, runner *api.Runner) error {
 		Preload("Stages.Ocr").
 		Preload("Stages.Reload").
 		Preload("Stages.Populate.Types").
+		Preload("Stages.InApp").
 		Preload("CaseSettings.Case").
 		Preload("CaseSettings.CompoundCase").
 		Preload("CaseSettings.ReviewCompound").
@@ -664,7 +660,33 @@ func (s RunnerService) RemoveScript(runner api.Runner) error {
 			zap.String("nuix_path", server.NuixPath),
 			zap.String("exception", err.Error()),
 		)
-		return fmt.Errorf("Failed to set nuix-path in ps-session: %s - %v", runner.Hostname, err.Error())
+		return fmt.Errorf("Failed to remove script in ps-session: %s - %v", runner.Hostname, err.Error())
+	}
+
+	// Get the base-dirname of the avian-scripts path
+	var dirName string
+	for i := len(server.AvianScripts) - 1; i >= 0; i-- {
+		if string(server.AvianScripts[i]) == "\\" {
+			dirName = server.AvianScripts[i:]
+			break
+		}
+		if string(server.AvianScripts[i]) == "/" {
+			dirName = server.AvianScripts[i:]
+			break
+		}
+	}
+
+	// Remove the scripts-dir if it exists
+	var scriptsDir = fmt.Sprintf("%s\\%s", server.NuixPath, dirName)
+	if err := session.CheckPath(scriptsDir); err == nil {
+		if err := session.RemoveItem(scriptsDir); err != nil {
+			logger.Error("Failed to remove scripts-dir in ps-session",
+				zap.String("server", runner.Hostname),
+				zap.String("scripts_dir", scriptsDir),
+				zap.String("exception", err.Error()),
+			)
+			return fmt.Errorf("Failed to remove script in ps-session: %s - %v", runner.Hostname, err.Error())
+		}
 	}
 	return nil
 }

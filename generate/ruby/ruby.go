@@ -1,10 +1,12 @@
 package ruby
 
 import (
+	"encoding/json"
 	"html/template"
 
 	api "github.com/avian-digital-forensics/auto-processing/pkg/avian-api"
 	"github.com/avian-digital-forensics/auto-processing/pkg/avian-client"
+	"github.com/avian-digital-forensics/auto-processing/pkg/inapp"
 	"github.com/gobuffalo/plush"
 )
 
@@ -20,6 +22,15 @@ func Generate(remoteAddress string, runner api.Runner) (string, error) {
 		return false
 	})
 
+	ctx.Set("hasInApp", func(r api.Runner) bool {
+		for _, s := range r.Stages {
+			if s.InApp != nil && !avian.Finished(s.InApp.Status) {
+				return true
+			}
+		}
+		return false
+	})
+
 	ctx.Set("getProcessingProfile", func(r api.Runner) string {
 		for _, s := range r.Stages {
 			if s.Process != nil {
@@ -27,6 +38,11 @@ func Generate(remoteAddress string, runner api.Runner) (string, error) {
 			}
 		}
 		return ""
+	})
+
+	ctx.Set("decodeSettings", func(s inapp.Settings) template.HTML {
+		b, _ := json.Marshal(s)
+		return template.HTML(string(b))
 	})
 
 	ctx.Set("getProcessingStageID", func(r api.Runner) uint {

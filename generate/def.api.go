@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/avian-digital-forensics/auto-processing/pkg/datastore"
+	"github.com/avian-digital-forensics/auto-processing/pkg/inapp"
 )
 
 // ServerService handles all the servers
@@ -712,6 +713,10 @@ type InApp struct {
 
 	// Config for in-app script
 	Config string
+
+	// Settings decoded from the
+	// config-file provided in Config-field
+	Settings inapp.Settings
 
 	// Status for the stage
 	Status int64

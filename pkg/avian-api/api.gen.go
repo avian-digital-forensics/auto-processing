@@ -11,6 +11,8 @@ import (
 
 	datastore "github.com/avian-digital-forensics/auto-processing/pkg/datastore"
 
+	inapp "github.com/avian-digital-forensics/auto-processing/pkg/inapp"
+
 	time "time"
 )
 
@@ -582,6 +584,18 @@ type File struct {
 	Path string `json:"path" yaml:"path"`
 }
 
+type Settings struct {
+	ArchivedPrefix                     string `json:"archivedPrefix" yaml:"archivedPrefix"`
+	ArchivedTag                        string `json:"archivedTag" yaml:"archivedTag"`
+	ArchivedHasDuplicateTag            string `json:"archivedHasDuplicateTag" yaml:"archivedHasDuplicateTag"`
+	ArchivedMissingDuplicateTag        string `json:"archivedMissingDuplicateTag" yaml:"archivedMissingDuplicateTag"`
+	HasMissingAttachmentsTag           string `json:"hasMissingAttachmentsTag" yaml:"hasMissingAttachmentsTag"`
+	ExcludeArchivedItemsWithDuplicates string `json:"excludeArchivedItemsWithDuplicates" yaml:"excludeArchivedItemsWithDuplicates"`
+	MainDirectory                      string `json:"mainDirectory" yaml:"mainDirectory"`
+	MetadataKey                        string `json:"metadataKey" yaml:"metadataKey"`
+	SourcePath                         string `json:"sourcePath" yaml:"sourcePath"`
+}
+
 // InApp script as a stage
 type InApp struct {
 	datastore.Base
@@ -591,6 +605,8 @@ type InApp struct {
 	Name string `json:"name" yaml:"name"`
 	// Config for in-app script
 	Config string `json:"config" yaml:"config"`
+	// Settings decoded from the config-file provided in Config-field
+	Settings inapp.Settings `json:"settings" yaml:"settings"`
 	// Status for the stage
 	Status int64 `json:"status" yaml:"status"`
 }

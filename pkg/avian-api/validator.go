@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/avian-digital-forensics/auto-processing/pkg/inapp"
 	"github.com/pkg/errors"
 )
 
@@ -169,6 +170,10 @@ func (s *Stage) Validate() error {
 			return errors.New("must specify a config for in-app script")
 		}
 
+		var settings inapp.Settings
+		if err := inapp.Config(s.InApp.Config, &settings); err != nil {
+			return fmt.Errorf("failed to decode config for in-app script: %s - %v", s.InApp.Name, err)
+		}
 	}
 	return nil
 }
@@ -218,6 +223,15 @@ func (r *Runner) Paths() []string {
 		}
 	}
 	return paths
+}
+
+func (r *Runner) HasInApp() bool {
+	for _, s := range r.Stages {
+		if s.InApp != nil {
+			return true
+		}
+	}
+	return false
 }
 
 func emptyString(s string) bool {

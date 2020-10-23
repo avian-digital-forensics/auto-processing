@@ -11,7 +11,9 @@ import (
 	"github.com/avian-digital-forensics/auto-processing/generate/ruby"
 	api "github.com/avian-digital-forensics/auto-processing/pkg/avian-api"
 	"github.com/avian-digital-forensics/auto-processing/pkg/avian-client"
+	"github.com/avian-digital-forensics/auto-processing/pkg/inapp"
 	"github.com/avian-digital-forensics/auto-processing/pkg/pwsh"
+	"github.com/avian-digital-forensics/auto-processing/pkg/utils"
 	"go.uber.org/zap"
 
 	"github.com/jinzhu/gorm"
@@ -59,6 +61,18 @@ func (q *Queue) loop() {
 		if query.First(&server).RecordNotFound() {
 			q.logger.Debug("Server is already active", zap.String("runner", runner.Name), zap.String("server", runner.Hostname))
 			continue
+		}
+
+		for _, s := range runner.Stages {
+			if s.InApp != nil {
+				var settings inapp.Settings
+				if err := inapp.Config(s.InApp.Config, &settings); err != nil {
+					q.logger.Error("Failed to decode inapp config", zap.String("exception", err.Error()))
+					continue
+				}
+				settings.MainDirectory = utils.RemoteScriptDir(server.NuixPath, server.AvianScripts)
+				s.InApp.Settings = settings
+			}
 		}
 
 		// Check to see if licence is active
@@ -188,19 +202,28 @@ func (r *run) start() error {
 		return fmt.Errorf("unable to set NUIX_PASSWORD env-variable: %v", err)
 	}
 
+	if r.runner.HasInApp() {
+		if len(r.server.AvianScripts) == 0 {
+			logger.Error("Cannot perform in-app scripts - avianScripts directory is not configured for server")
+			return fmt.Errorf("Cannot perform in-app scripts - avianScripts directory is not configured for server")
+		}
+		logger.Info("Copying avian-scripts directory to session", zap.String("src", r.server.AvianScripts), zap.String("dst", r.server.NuixPath))
+		if err := session.CopyItemFromHost(r.server.AvianScripts, r.server.NuixPath); err != nil {
+			logger.Error("Failed to copy avian-scripts directory to session",
+				zap.String("src", r.server.AvianScripts),
+				zap.String("dst", r.server.NuixPath),
+				zap.String("exception", err.Error()),
+			)
+			return fmt.Errorf("Failed to copy avian-scripts directory to session: %v", err)
+		}
+	}
+
 	scriptName := r.runner.Name + ".gen.rb"
-
-	r.queue.logger.Info("Creating runner-script to server",
-		zap.String("runner", r.runner.Name),
-		zap.String("server", r.server.Hostname),
-		zap.String("script", scriptName),
-	)
-
+	logger.Info("Creating runner-script to server", zap.String("script", scriptName))
 	if err := session.CreateFile(r.server.NuixPath, scriptName, []byte(script)); err != nil {
 		session.Close()
 		return fmt.Errorf("Failed to create script-file: %v", err)
 	}
-	//defer client.RemoveFile(r.server.NuixPath, scriptName)
 
 	r.queue.logger.Info("STARTING RUNNER",
 		zap.String("runner", r.runner.Name),
@@ -293,6 +316,7 @@ func getRunners(db *gorm.DB) ([]*api.Runner, error) {
 		Preload("Stages.Ocr").
 		Preload("Stages.Reload").
 		Preload("Stages.Populate.Types").
+		Preload("Stages.InApp").
 		Preload("CaseSettings.Case").
 		Preload("CaseSettings.CompoundCase").
 		Preload("CaseSettings.ReviewCompound").
@@ -310,6 +334,7 @@ func getRunnerByName(db *gorm.DB, name string) (*api.Runner, error) {
 		Preload("Stages.Ocr").
 		Preload("Stages.Reload").
 		Preload("Stages.Populate.Types").
+		Preload("Stages.InApp").
 		Preload("CaseSettings.Case").
 		Preload("CaseSettings.CompoundCase").
 		Preload("CaseSettings.ReviewCompound").
