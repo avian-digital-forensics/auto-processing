@@ -165,7 +165,7 @@ func (r *run) start() error {
 	)
 	// Generate the ruby-script for the runner
 	logger.Info("Generating script for runner")
-	script, err := ruby.Generate(r.queue.uri, *r.runner)
+	script, err := ruby.Generate(r.queue.uri, utils.RemoteScriptDir(r.server.NuixPath, r.server.AvianScripts), *r.runner)
 	if err != nil {
 		return fmt.Errorf("failed to generate script for runner: %s - %v", r.runner.Name, err)
 	}

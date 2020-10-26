@@ -696,7 +696,7 @@ func (s RunnerService) Script(ctx context.Context, r api.RunnerGetRequest) (*api
 	if err := getPreloadedRunner(s.DB, &runner); err != nil {
 		return nil, err
 	}
-	script, err := ruby.Generate("", runner)
+	script, err := ruby.Generate("", "", runner)
 	if err != nil {
 		return nil, err
 	}
