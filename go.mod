@@ -16,6 +16,7 @@ require (
 	github.com/simonjanss/go-powershell v0.0.0-20201014075207-9ada2bb4ef25
 	github.com/spf13/cobra v1.0.0
 	go.uber.org/zap v1.16.0
+	golang.org/x/sys v0.0.0-20200323222414-85ca7c5b95cd
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 )

@@ -105,6 +105,41 @@ def log_error(stage, stage_id, message, exception)
   })
 end
 
+<%= if (hasInApp(runner)) { %># ProgressHandler class
+require '<%= scriptDir %>\\utils\\progress_handler'
+
+# Converts a script name to a module name.
+# There may very well be easier ways of doing this.
+def find_module_name(script_name)
+  module_name = ''
+  capitalize = true
+  for i in 0..script_name.length-1
+    if script_name[i] == '_'
+      capitalize = true
+    elsif capitalize
+      capitalize = false
+      module_name += script_name[i].capitalize
+    else
+      module_name += script_name[i]
+    end
+  end
+  # Chomp '.rb' just in case.
+  return module_name.chomp('.rb')
+end
+
+def load_script(script_name)
+  script_path = '<%= scriptDir %>\\inapp-scripts\\automation-scripts\\' + script_name + '.rb'
+  module_name = find_module_name(script_name)
+  # Chomp '.rb' just in case.
+  require script_path.chomp('.rb')
+  # Log error if no such module exists
+  unless Object.const_defined?(module_name)
+    STDERR.puts('No module with name "' + module_name + '" exists. Make sure script files and modules have matching names.')
+  end
+  # Returns the script module as an object.
+  return Object.const_get(module_name)
+end<% } %>
+
 Thread.new {
   loop do
     sleep 90
@@ -289,7 +324,7 @@ rescue => e
   failed_runner(e)
   exit(false)
 end
-<% } %><%= for (i, s) in getStages(runner) { %><%= if (!isProcess(s)) { %> 
+<% } %><%= for (i, s) in getStages(runner) { %><%= if (isNoProcessing(s) && shouldRun(s)) { %> 
 # Start stage: <%= i %> - <%= stageName(s) %>
 begin
   # Start <%= stageName(s) %>-stage (update api)
@@ -450,7 +485,19 @@ begin
       log_debug('<%= stageName(s) %>', <%= s.ID %>, 'Finished the reload-processing')
     else
       log_debug('<%= stageName(s) %>', <%= s.ID %>, 'No items to process for reload')
-    end<% } %>
+    end<% } %><%= if (inApp(s)) { %># Load the InApp-script
+  script = load_script('<%= s.InApp.Name %>')
+
+  # Setup the progress-handler
+  progress_handler = ProgressHandler::ProgressHandler.new { |message| 
+    puts(message) 
+  }
+
+  # Set settings for the script
+  settings = <%= decodeSettings(s.InApp.Settings) %>
+
+  # run the script
+  script.run(single_case, $utilities, settings, progress_handler)<% } %>
 
   # Finish the <%= stageName(s) %>-stage (update api)
   finish(<%= s.ID %>)
@@ -468,7 +515,7 @@ rescue => e
   <% } %>
   log_error('<%= stageName(s) %>', <%= s.ID %>, 'Failed', e)
   STDOUT.puts('FINISHED RUNNER')
-  STDERR.puts("Failed to run stage <%= stageName(s) %> id <%= s.ID %> : #{e}")
+  STDERR.puts("Failed to run stage <%= stageName(s) %> id <%= s.ID %> : #{e.backtrace}")
   failed_runner(e)
   exit(false)
 end

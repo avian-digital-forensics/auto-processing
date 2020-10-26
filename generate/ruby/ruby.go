@@ -1,19 +1,30 @@
 package ruby
 
 import (
+	"encoding/json"
 	"html/template"
 
 	api "github.com/avian-digital-forensics/auto-processing/pkg/avian-api"
 	"github.com/avian-digital-forensics/auto-processing/pkg/avian-client"
+	"github.com/avian-digital-forensics/auto-processing/pkg/inapp"
 	"github.com/gobuffalo/plush"
 )
 
-func Generate(remoteAddress string, runner api.Runner) (string, error) {
+func Generate(remoteAddress, scriptDir string, runner api.Runner) (string, error) {
 	ctx := plush.NewContext()
 
 	ctx.Set("process", func(r api.Runner) bool {
 		for _, s := range r.Stages {
 			if s.Process != nil && !avian.Finished(s.Process.Status) {
+				return true
+			}
+		}
+		return false
+	})
+
+	ctx.Set("hasInApp", func(r api.Runner) bool {
+		for _, s := range r.Stages {
+			if s.InApp != nil && !avian.Finished(s.InApp.Status) {
 				return true
 			}
 		}
@@ -27,6 +38,11 @@ func Generate(remoteAddress string, runner api.Runner) (string, error) {
 			}
 		}
 		return ""
+	})
+
+	ctx.Set("decodeSettings", func(s inapp.Settings) template.HTML {
+		b, _ := json.Marshal(s)
+		return template.HTML(string(b))
 	})
 
 	ctx.Set("getProcessingStageID", func(r api.Runner) uint {
@@ -66,7 +82,7 @@ func Generate(remoteAddress string, runner api.Runner) (string, error) {
 	})
 
 	ctx.Set("getStages", func(r api.Runner) []*api.Stage { return r.Stages })
-	ctx.Set("isProcess", func(s *api.Stage) bool { return s.Process != nil && !avian.Finished(s.Process.Status) })
+	ctx.Set("isNoProcessing", func(s *api.Stage) bool { return s.Process == nil })
 	ctx.Set("searchAndTag", func(s *api.Stage) bool { return s.SearchAndTag != nil && !avian.Finished(s.SearchAndTag.Status) })
 	ctx.Set("exclude", func(s *api.Stage) bool { return s.Exclude != nil && !avian.Finished(s.Exclude.Status) })
 	ctx.Set("ocr", func(s *api.Stage) bool { return s.Ocr != nil && !avian.Finished(s.Ocr.Status) })
@@ -75,8 +91,10 @@ func Generate(remoteAddress string, runner api.Runner) (string, error) {
 	ctx.Set("inApp", func(s *api.Stage) bool { return s.InApp != nil && !avian.Finished(s.InApp.Status) })
 	ctx.Set("stageName", func(s *api.Stage) string { return avian.Name(s) })
 	ctx.Set("formatQuotes", func(s string) template.HTML { return template.HTML(s) })
+	ctx.Set("shouldRun", func(s *api.Stage) bool { return avian.StageState(s) != avian.StatusFinished })
 
 	ctx.Set("remoteAddress", remoteAddress)
+	ctx.Set("scriptDir", scriptDir)
 	ctx.Set("runner", runner)
 	return plush.Render(rubyTemplate, ctx)
 }
