@@ -31,7 +31,7 @@ func (s service) Close() error {
 type Session interface {
 	CopyItemFromHost(src, dst string) error
 	CheckPath(path string) error
-	Close()
+	Close() error
 	CreateFile(path, name string, data []byte) error
 	Echo(arg string) (string, error)
 	EnableCredSSP() error
@@ -76,8 +76,8 @@ func (s session) CheckPath(path string) error {
 	return err
 }
 
-func (s session) Close() {
-	//return s.session.Close()
+func (s session) Close() error {
+	return s.session.Close()
 }
 
 func (s session) CreateFile(path, name string, data []byte) error {
