@@ -663,6 +663,10 @@ func (s RunnerService) RemoveScript(runner api.Runner) error {
 		return fmt.Errorf("Failed to remove script in ps-session: %s - %v", runner.Hostname, err.Error())
 	}
 
+	if len(server.AvianScripts) == 0 {
+		return nil
+	}
+
 	// Get the base-dirname of the avian-scripts path
 	var dirName string
 	for i := len(server.AvianScripts) - 1; i >= 0; i-- {
