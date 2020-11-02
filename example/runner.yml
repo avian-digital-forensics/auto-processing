@@ -52,8 +52,18 @@ api:
         profile: Default
         profilePath: C:\ProgramData\Nuix\Processing Profiles\Default.xml
         evidenceStore:
+          # First evidence to process
           - name: evidence_1
             directory: C:\Evidence\kate_symes\kate_symes_003_1_1.pst
+            description: this is the description for the evidence
+            encoding: UTF-8
+            timeZone: US/Pacific
+            custodian: Suspect
+            locale: en-US
+            
+          # Second evidence to process
+          - name: evidence_2
+            directory: C:\Evidence\kate_symes\kate_symes_003_1_2.pst
             description: this is the description for the evidence
             encoding: UTF-8
             timeZone: US/Pacific
