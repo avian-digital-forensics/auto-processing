@@ -520,5 +520,12 @@ rescue => e
   exit(false)
 end
 <% } %> <% } %>
+<%= if (process(runner)) { %>
+# Tear down the cases
+tear_down(single_case, compound_case, review_compound)
+<% } else { %>
+# Tear down the simple-case
+tear_down(single_case, nil, nil)
+<% } %>
 STDOUT.puts('FINISHED RUNNER')
 finish_runner`
