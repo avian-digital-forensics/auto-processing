@@ -204,7 +204,9 @@ func stagesRunner(ctx context.Context, runner string) error {
 	headers = table.Row{"ID", "Runner", "Stage", "Status"}
 
 	for _, s := range resp.Runner.Stages {
-		body = append(body, table.Row{s.ID, resp.Runner.Name, s.Name(), s.Status()})
+		if !s.Nil() {
+			body = append(body, table.Row{s.ID, resp.Runner.Name, s.Name(), s.Status()})
+		}
 	}
 
 	fmt.Fprintf(os.Stdout, "%s\n", pretty.Format(headers, body))

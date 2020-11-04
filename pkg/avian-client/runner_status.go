@@ -234,3 +234,22 @@ func HasFinished(s *api.Stage) bool {
 	}
 	return false
 }
+
+func (s *Stage) Nil() bool {
+	if s.Process != nil {
+		return false
+	} else if s.SearchAndTag != nil {
+		return false
+	} else if s.Reload != nil {
+		return false
+	} else if s.Exclude != nil {
+		return false
+	} else if s.Populate != nil {
+		return false
+	} else if s.Ocr != nil {
+		return false
+	} else if s.InApp != nil {
+		return false
+	}
+	return true
+}
