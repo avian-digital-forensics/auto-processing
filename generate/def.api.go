@@ -650,6 +650,9 @@ type Ocr struct {
 	// Search query in the case
 	Search string
 
+	// BatchSize for items
+	BatchSize int
+
 	// Status for the stage
 	Status int64
 }

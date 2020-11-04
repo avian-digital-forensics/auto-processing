@@ -753,6 +753,8 @@ type Ocr struct {
 	ProfilePath string `json:"profilePath" yaml:"profilePath"`
 	// Search query in the case
 	Search string `json:"search" yaml:"search"`
+	// BatchSize for items
+	BatchSize int `json:"batchSize" yaml:"batchSize"`
 	// Status for the stage
 	Status int64 `json:"status" yaml:"status"`
 }

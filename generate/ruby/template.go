@@ -404,13 +404,13 @@ begin
   
     # variables to use for batched ocr
     batch_index = 0
-    target_batch_size = 100
+    target_batch_size = <%= s.Ocr.BatchSize %>
     total_batches = (ocr_items.size.to_f / target_batch_size.to_f).ceil
   
     ocr_items.each_slice(target_batch_size) do |slice_items|
-    log_info('<%= stageName(s) %>', <%= s.ID %>, "Start ocr-processing batch : #{batch_index+1}/#{total_batches}")
-    ocr_processor.process(slice_items, ocr_profile)
-    batch_index += 1
+      log_info('<%= stageName(s) %>', <%= s.ID %>, "Start ocr-processing batch : #{batch_index+1}/#{total_batches}")
+      ocr_processor.process(slice_items, ocr_profile)
+      batch_index += 1
     end
   end<% } %><%= if (exclude(s)) { %>items = single_case.search('<%= formatQuotes(s.Exclude.Search) %>')
   log_debug('<%= stageName(s) %>', <%= s.ID %>, "Found #{items.length} from search <%= s.Exclude.Search %> - starts excluding")

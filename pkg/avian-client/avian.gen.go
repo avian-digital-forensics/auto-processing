@@ -1526,6 +1526,9 @@ type Ocr struct {
 	// Search query in the case
 	Search string `json:"search" yaml:"search"`
 
+	// BatchSize for items
+	BatchSize int `json:"batchSize" yaml:"batchSize"`
+
 	// Status for the stage
 	Status int64 `json:"status" yaml:"status"`
 }

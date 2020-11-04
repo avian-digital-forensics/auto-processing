@@ -151,6 +151,9 @@ func (s *Stage) Validate() error {
 		if emptyString(s.Ocr.Search) {
 			return errors.New("must specify a search-query for OCR-stage")
 		}
+		if s.Ocr.BatchSize == 0 {
+			return errors.New("must specify a batchSize for OCR-stage")
+		}
 	}
 
 	if s.Exclude != nil {

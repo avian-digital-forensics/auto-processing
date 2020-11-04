@@ -89,6 +89,7 @@ api:
         profile: Default
         profilePath: C:\ProgramData\Nuix\OCR Profiles\Default.xml
         search: tag:hello
+        batchSize: 100
     
     - exclude:
         search: kind:email
