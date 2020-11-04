@@ -1399,6 +1399,12 @@ type LogItemRequest struct {
 	GUID string `json:"gUID" yaml:"gUID"`
 
 	ProcessStage string `json:"processStage" yaml:"processStage"`
+
+	IsCorrupted bool `json:"isCorrupted" yaml:"isCorrupted"`
+
+	IsDeleted bool `json:"isDeleted" yaml:"isDeleted"`
+
+	IsEncrypted bool `json:"isEncrypted" yaml:"isEncrypted"`
 }
 
 type LogRequest struct {

@@ -63,7 +63,7 @@ def failed(id)
   send_request('FailedStage', {runner: '<%= runner.Name %>', stageID: id})
 end
 
-def log_item(stage, stage_id, message, count, mime_type, guid, processStage)
+def log_processed_item(stage, stage_id, message, count, mime_type, guid, processStage, is_corrupted, is_deleted, is_encrypted)
   item = {
     runner: '<%= runner.Name %>', 
     stage: stage, 
@@ -73,8 +73,15 @@ def log_item(stage, stage_id, message, count, mime_type, guid, processStage)
     mimeType: mime_type, 
     gUID: guid, 
     processStage: processStage,
+    isCorrupted: is_corrupted,
+    isDeleted: is_deleted,
+    isEncryped: is_encrypted,
   }
   send_request('LogItem', item)
+end
+
+def log_item(stage, stage_id, message, count, mime_type, guid, processStage)
+  log_processed_item(stage, stage_id, message, count, mime_type, guid, processStage, false, false, false)
 end
 
 def log_debug(stage, stage_id, message)
@@ -303,7 +310,18 @@ begin
   case_processor.when_item_processed do |info|
     semaphore.synchronize {
       processed_count += 1
-      log_item('Process', <%= getProcessingStageID(runner) %>, 'Processed item', processed_count, info.mime_type, info.guid_path, '')
+      log_processed_item(
+        'Process', 
+        <%= getProcessingStageID(runner) %>, 
+        'Processed item', 
+        processed_count, 
+        info.mime_type, 
+        info.guid_path, 
+        '',
+        info.is_corrupted,
+        info.is_deleted,
+        info.is_encrypted,
+      )
     }
   end
 

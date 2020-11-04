@@ -510,6 +510,20 @@ func (s RunnerService) LogItem(ctx context.Context, r api.LogItemRequest) (*api.
 		logger = logger.With(zap.String("guid", r.GUID))
 	}
 
+	var flags []string
+	if r.IsCorrupted {
+		flags = append(flags, "CORRUPTED")
+	}
+	if r.IsDeleted {
+		flags = append(flags, "DELETED")
+	}
+	if r.IsEncrypted {
+		flags = append(flags, "ENCRYPTED")
+	}
+	if len(flags) > 0 {
+		logger = logger.With(zap.Strings("flags", flags))
+	}
+
 	logger.Debug(r.Message)
 	return &api.LogResponse{}, nil
 }

@@ -436,6 +436,9 @@ type LogItemRequest struct {
 	MimeType     string
 	GUID         string
 	ProcessStage string
+	IsCorrupted  bool
+	IsDeleted    bool
+	IsEncrypted  bool
 }
 
 type LogRequest struct {

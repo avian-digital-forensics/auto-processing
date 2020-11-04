@@ -590,7 +590,7 @@ type Settings struct {
 	ArchivedHasDuplicateTag            string `json:"archivedHasDuplicateTag" yaml:"archivedHasDuplicateTag"`
 	ArchivedMissingDuplicateTag        string `json:"archivedMissingDuplicateTag" yaml:"archivedMissingDuplicateTag"`
 	HasMissingAttachmentsTag           string `json:"hasMissingAttachmentsTag" yaml:"hasMissingAttachmentsTag"`
-	ExcludeArchivedItemsWithDuplicates string `json:"excludeArchivedItemsWithDuplicates" yaml:"excludeArchivedItemsWithDuplicates"`
+	ExcludeArchivedItemsWithDuplicates bool   `json:"excludeArchivedItemsWithDuplicates" yaml:"excludeArchivedItemsWithDuplicates"`
 	MainDirectory                      string `json:"mainDirectory" yaml:"mainDirectory"`
 	MetadataKey                        string `json:"metadataKey" yaml:"metadataKey"`
 	SourcePath                         string `json:"sourcePath" yaml:"sourcePath"`
@@ -646,6 +646,9 @@ type LogItemRequest struct {
 	MimeType     string `json:"mimeType" yaml:"mimeType"`
 	GUID         string `json:"gUID" yaml:"gUID"`
 	ProcessStage string `json:"processStage" yaml:"processStage"`
+	IsCorrupted  bool   `json:"isCorrupted" yaml:"isCorrupted"`
+	IsDeleted    bool   `json:"isDeleted" yaml:"isDeleted"`
+	IsEncrypted  bool   `json:"isEncrypted" yaml:"isEncrypted"`
 }
 
 type LogRequest struct {
