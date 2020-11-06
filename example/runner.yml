@@ -100,6 +100,9 @@ api:
         profilePath: C:\ProgramData\Nuix\Processing Profiles\Default.xml
         search: kind:email
 
+    - syncDescendants:
+        search: tag:items-to-sync
+
     # Switches are available from v16
     switches:
       # - -Dnuix.processing.sharedTempDirectory=<path> ## Change this to override worker temp location otherwise defined in the processing profile
