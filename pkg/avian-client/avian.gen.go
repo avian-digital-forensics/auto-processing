@@ -1777,6 +1777,9 @@ type Stage struct {
 
 	// InApp is a stage for avian in-app scripts
 	InApp *InApp `json:"inApp" yaml:"inApp"`
+
+	// SyncDescendants syncs descendants for the specified items
+	SyncDescendants *SyncDescendants `json:"syncDescendants" yaml:"syncDescendants"`
 }
 
 type StageResponse struct {
@@ -1872,6 +1875,19 @@ type ServerListRequest struct {
 // ServerListResponse is the output-object for List in the server-service
 type ServerListResponse struct {
 	Servers []Server `json:"servers" yaml:"servers"`
+}
+
+type SyncDescendants struct {
+	datastore.Base
+
+	// StageID foreign-key for stage-table
+	StageID uint `json:"stageID" yaml:"stageID"`
+
+	// Search for the items to sync
+	Search string `json:"search" yaml:"search"`
+
+	// Status for the stage
+	Status int64 `json:"status" yaml:"status"`
 }
 
 // Type holds information for a type

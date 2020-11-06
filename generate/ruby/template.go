@@ -371,12 +371,37 @@ begin
   log_debug('<%= stageName(s) %>', <%= s.ID %>, "Found #{items.length} from search <%= s.SearchAndTag.Search %> - starts tagging")
   item_count = 0
   for item in items
-  item.add_tag('<%= s.SearchAndTag.Tag %>')
-  item_count += 1
-  log_item('<%= stageName(s) %>', <%= s.ID %>, 'Tagged item', item_count, item.type.name, item.guid, '')
+    item.add_tag('<%= s.SearchAndTag.Tag %>')
+    item_count += 1
+    log_item('<%= stageName(s) %>', <%= s.ID %>, 'Tagged item', item_count, item.type.name, item.guid, '')
   end
-  <% } %><% } %><%= if (ocr(s)) { %>ocr_processor = $utilities.createOcrProcessor
+  <% } %><% } %><%= if (syncDescendants(s)) { %>sync_processor = single_case.create_processor
 
+  processed_count = 0
+  sync_processor.when_item_processed do |info|
+  semaphore = Mutex.new
+  semaphore.synchronize {
+    processed_count += 1
+    log_processed_item(
+      '<%= stageName(s) %>', 
+      <%= s.ID %>, 
+      'Processed item', 
+      processed_count, 
+      info.mime_type, 
+      info.guid_path, 
+      '',
+      info.is_corrupted,
+      info.is_deleted,
+      info.is_encrypted,
+    )
+  }
+  end
+
+  sync_items = single_case.search('<%= formatQuotes(s.SyncDescendants.Search) %>')
+  sync_processor.sync(sync_items, nil, nil)
+  sync_processor.process
+
+  <% } %><%= if (ocr(s)) { %>ocr_processor = $utilities.createOcrProcessor
   # Check if the profile exists in the store
   unless $utilities.get_ocr_profile_store.contains_profile('<%= s.Ocr.Profile %>')
     # Import the profile

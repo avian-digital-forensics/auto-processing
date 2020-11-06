@@ -60,6 +60,10 @@ func StageState(s *api.Stage) int64 {
 		return s.InApp.Status
 	}
 
+	if s.SyncDescendants != nil {
+		return s.SyncDescendants.Status
+	}
+
 	return 0
 }
 
@@ -90,6 +94,10 @@ func (s *Stage) Status() string {
 
 	if s.InApp != nil {
 		return getStatus(s.InApp.Status)
+	}
+
+	if s.SyncDescendants != nil {
+		return getStatus(s.SyncDescendants.Status)
 	}
 
 	return "Unknown"
@@ -124,6 +132,10 @@ func Name(s *api.Stage) string {
 		return "InApp-" + s.InApp.Name
 	}
 
+	if s.SyncDescendants != nil {
+		return "SyncDescendants"
+	}
+
 	return "Unknown"
 }
 
@@ -156,6 +168,10 @@ func (s *Stage) Name() string {
 		return "InApp-" + s.InApp.Name
 	}
 
+	if s.SyncDescendants != nil {
+		return "SyncDescendants"
+	}
+
 	return "Unknown"
 }
 
@@ -176,6 +192,8 @@ func SetStatusRunning(stage *api.Stage) {
 		stage.Ocr.Status = StatusRunning
 	} else if stage.InApp != nil {
 		stage.InApp.Status = StatusRunning
+	} else if stage.SyncDescendants != nil {
+		stage.SyncDescendants.Status = StatusRunning
 	}
 	return
 }
@@ -195,6 +213,8 @@ func SetStatusFailed(stage *api.Stage) {
 		stage.Ocr.Status = StatusFailed
 	} else if stage.InApp != nil {
 		stage.InApp.Status = StatusFailed
+	} else if stage.SyncDescendants != nil {
+		stage.SyncDescendants.Status = StatusFailed
 	}
 }
 
@@ -213,6 +233,8 @@ func SetStatusFinished(stage *api.Stage) {
 		stage.Ocr.Status = StatusFinished
 	} else if stage.InApp != nil {
 		stage.InApp.Status = StatusFinished
+	} else if stage.SyncDescendants != nil {
+		stage.SyncDescendants.Status = StatusFinished
 	}
 }
 
@@ -231,6 +253,8 @@ func HasFinished(s *api.Stage) bool {
 		return Finished(s.Ocr.Status)
 	} else if s.InApp != nil {
 		return Finished(s.InApp.Status)
+	} else if s.SyncDescendants != nil {
+		return Finished(s.SyncDescendants.Status)
 	}
 	return false
 }
@@ -249,6 +273,8 @@ func (s *Stage) Nil() bool {
 	} else if s.Ocr != nil {
 		return false
 	} else if s.InApp != nil {
+		return false
+	} else if s.SyncDescendants != nil {
 		return false
 	}
 	return true

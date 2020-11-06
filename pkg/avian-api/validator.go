@@ -87,7 +87,8 @@ func (s *Stage) Nil() bool {
 		s.Reload == nil &&
 		s.Populate == nil &&
 		s.Ocr == nil &&
-		s.InApp == nil)
+		s.InApp == nil &&
+		s.SyncDescendants == nil)
 }
 
 // Validate validates a Stage

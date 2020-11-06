@@ -963,6 +963,8 @@ type Stage struct {
 	Reload *Reload `json:"reload" yaml:"reload"`
 	// InApp is a stage for avian in-app scripts
 	InApp *InApp `json:"inApp" yaml:"inApp"`
+	// SyncDescendants syncs descendants for the specified items
+	SyncDescendants *SyncDescendants `json:"syncDescendants" yaml:"syncDescendants"`
 }
 
 type StageResponse struct {
@@ -1046,6 +1048,16 @@ type ServerListResponse struct {
 	Servers []Server `json:"servers" yaml:"servers"`
 	// Error is string explaining what went wrong. Empty if everything was fine.
 	Error string `json:"error,omitempty" yaml:"error,omitempty"`
+}
+
+type SyncDescendants struct {
+	datastore.Base
+	// StageID foreign-key for stage-table
+	StageID uint `json:"stageID" yaml:"stageID"`
+	// Search for the items to sync
+	Search string `json:"search" yaml:"search"`
+	// Status for the stage
+	Status int64 `json:"status" yaml:"status"`
 }
 
 // Type holds information for a type

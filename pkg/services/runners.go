@@ -206,6 +206,7 @@ func (s RunnerService) List(ctx context.Context, r api.RunnerListRequest) (*api.
 		Preload("Stages.Reload").
 		Preload("Stages.Populate").
 		Preload("Stages.InApp").
+		Preload("Stages.SyncDescendants").
 		Find(&runners).Error
 	if err != nil {
 		s.logger.Error("Cannot get runners-list", zap.String("exception", err.Error()))
@@ -246,6 +247,8 @@ func (s RunnerService) Delete(ctx context.Context, r api.RunnerDeleteRequest) (*
 		Preload("Stages.Ocr").
 		Preload("Stages.Reload").
 		Preload("Stages.Populate").
+		Preload("Stages.InApp").
+		Preload("Stages.SyncDescendants").
 		Preload("CaseSettings.Case").
 		Preload("CaseSettings.CompoundCase").
 		Preload("CaseSettings.ReviewCompound").
@@ -416,6 +419,7 @@ func (s RunnerService) StartStage(ctx context.Context, r api.StageRequest) (*api
 		Preload("Populate").
 		Preload("Ocr").
 		Preload("InApp").
+		Preload("SyncDescendants").
 		First(&stage, r.StageID).Error; err != nil {
 		logger.Error("Cannot get the requested stage", zap.String("exception", err.Error()))
 		return nil, fmt.Errorf("did not get requested stage : %v", err)
@@ -443,6 +447,7 @@ func (s RunnerService) FailedStage(ctx context.Context, r api.StageRequest) (*ap
 		Preload("Populate").
 		Preload("Ocr").
 		Preload("InApp").
+		Preload("SyncDescendants").
 		First(&stage, r.StageID).Error; err != nil {
 		logger.Error("Cannot get the requested stage", zap.String("exception", err.Error()))
 		return nil, fmt.Errorf("did not get requested stage : %v", err)
@@ -470,6 +475,7 @@ func (s RunnerService) FinishStage(ctx context.Context, r api.StageRequest) (*ap
 		Preload("Populate").
 		Preload("Ocr").
 		Preload("InApp").
+		Preload("SyncDescendants").
 		First(&stage, r.StageID).Error; err != nil {
 		logger.Error("Cannot get the requested stage", zap.String("exception", err.Error()))
 		return nil, fmt.Errorf("did not get requested stage : %v", err)
@@ -642,6 +648,7 @@ func getPreloadedRunner(db *gorm.DB, runner *api.Runner) error {
 		Preload("Stages.Reload").
 		Preload("Stages.Populate.Types").
 		Preload("Stages.InApp").
+		Preload("Stages.SyncDescendants").
 		Preload("CaseSettings.Case").
 		Preload("CaseSettings.CompoundCase").
 		Preload("CaseSettings.ReviewCompound").

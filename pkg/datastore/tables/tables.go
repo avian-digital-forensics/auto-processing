@@ -28,6 +28,7 @@ func Migrate(db *gorm.DB) error {
 		&api.File{},
 		&api.Type{},
 		&api.InApp{},
+		&api.SyncDescendants{},
 	).Error
 }
 

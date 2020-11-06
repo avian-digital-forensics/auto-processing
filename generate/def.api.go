@@ -532,6 +532,9 @@ type Stage struct {
 
 	// InApp is a stage for avian in-app scripts
 	InApp *InApp
+
+	// SyncDescendants syncs descendants for the specified items
+	SyncDescendants *SyncDescendants
 }
 
 // Process -stage processes data into a Nuix-case
@@ -723,6 +726,20 @@ type InApp struct {
 	// Settings decoded from the
 	// config-file provided in Config-field
 	Settings inapp.Settings
+
+	// Status for the stage
+	Status int64
+}
+
+type SyncDescendants struct {
+	// Base for the datastore
+	datastore.Base
+
+	// StageID foreign-key for stage-table
+	StageID uint
+
+	// Search for the items to sync
+	Search string
 
 	// Status for the stage
 	Status int64
