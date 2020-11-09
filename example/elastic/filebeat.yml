@@ -5,28 +5,28 @@ filebeat.inputs:
   paths:
      - ${AUTOMATION_DIR}\nuix-logs\*\nuix.log
   include_lines: ['-\s*S\s*T\s*A\s*R\s*T\s*I\s*N\s*G\s*R\s*U\s*N\s*N\s*E\s*R']
-  tags: ["NUIX-RUNNER-START" ,"CASE-TRIGGER"]
+  tags: ["NUIX-LOG", "NUIX-RUNNER-START" ,"CASE-TRIGGER"]
   scan_frequency: 10s
 
 - type: log
   paths:
      - ${AUTOMATION_DIR}\nuix-logs\*\nuix.log
   include_lines: ['-\s*F\s*I\s*N\s*I\s*S\s*H\s*E\s*D\s*R\s*U\s*N\s*N\s*E\s*R']
-  tags: ["NUIX-RUNNER-END" ,"CASE-TRIGGER"]
+  tags: ["NUIX-LOG", "NUIX-RUNNER-END" ,"CASE-TRIGGER"]
   scan_frequency: 10s
 
 - type: log
   paths:
      - ${AUTOMATION_DIR}\nuix-logs\*\nuix.log
   include_lines: ['-\s*i\s*t\s*e\s*m\s*p\s*r\s*o\s*c\s*e\s*s\s*s\s*e\s*d\s*:']
-  tags: ["NUIX-MAIN-LOG-INFO" ,"AUTOMATION-CASE-ITEM"]
+  tags: ["NUIX-LOG", "NUIX-MAIN-LOG-INFO" ,"AUTOMATION-CASE-ITEM"]
   scan_frequency: 10s
 
 - type: log
   paths:
      - ${AUTOMATION_DIR}\nuix-logs\*\nuix.log
   include_lines: ['ERROR']
-  tags: ["NUIX-MAIN-LOG-ERROR"]
+  tags: ["NUIX-LOG", NUIX-MAIN-LOG-ERROR"]
   multiline.type: pattern
   multiline.pattern: '^[[:space:]]+(at|\.{3})[[:space:]]+\b|^Caused by:|^com|^java'
   multiline.negate: false
@@ -38,7 +38,7 @@ filebeat.inputs:
      - ${AUTOMATION_DIR}\nuix-logs\*\nuix.log
 
   include_lines: ['WARN']
-  tags: ["NUIX-MAIN-LOG-WARN"]
+  tags: ["NUIX-LOG", "NUIX-MAIN-LOG-WARN"]
   multiline.type: pattern
   multiline.pattern: '^[[:space:]]+(at|\.{3})[[:space:]]+\b|^Caused by:|^com|^java'
   multiline.negate: false
@@ -52,7 +52,7 @@ filebeat.inputs:
   exclude_lines: ['-\s*S\s*T\s*A\s*R\s*T\s*I\s*N\s*G\s*R\s*U\s*N\s*N\s*E\s*R']
   exclude_lines: ['-\s*F\s*I\s*N\s*I\s*S\s*H\s*E\s*D\s*R\s*U\s*N\s*N\s*E\s*R']
   exclude_lines: ['-\s*i\s*t\s*e\s*m\s*p\s*r\s*o\s*c\s*e\s*s\s*s\s*e\s*d\s*:']
-  tags: ["NUIX-MAIN-LOG-INFO"]
+  tags: ["NUIX-LOG", "NUIX-MAIN-LOG-INFO"]
   multiline.type: pattern
   multiline.pattern: '^[[:space:]]+(at|\.{3})[[:space:]]+\b|^Caused by:|^com|^java'
   multiline.negate: false
@@ -63,7 +63,7 @@ filebeat.inputs:
   paths:
      - ${AUTOMATION_DIR}\nuix-logs\*\*\*\nuix.log
   include_lines: ['ERROR']
-  tags: ["NUIX-WORKER-LOG-ERROR"]
+  tags: ["NUIX-LOG", "NUIX-WORKER-LOG-ERROR"]
   multiline.type: pattern
   multiline.pattern: '^[[:space:]]+(at|\.{3})[[:space:]]+\b|^Caused by:|^com|^java'
   multiline.negate: false
@@ -74,7 +74,7 @@ filebeat.inputs:
   paths:
      - ${AUTOMATION_DIR}\nuix-logs\*\*\*\nuix.log
   include_lines: ['WARN ']
-  tags: ["NUIX-WORKER-LOG-WARN"]
+  tags: ["NUIX-LOG", "NUIX-WORKER-LOG-WARN"]
   multiline.type: pattern
   multiline.pattern: '^[[:space:]]+(at|\.{3})[[:space:]]+\b|^Caused by:|^com|^java'
   multiline.negate: false
@@ -85,7 +85,7 @@ filebeat.inputs:
   paths:
      - ${AUTOMATION_DIR}\nuix-logs\*\*\*\nuix.log
   include_lines: ['INFO']
-  tags: ["NUIX-WORKER-LOG-INFO"]
+  tags: ["NUIX-LOG", "NUIX-WORKER-LOG-INFO"]
   multiline.type: pattern
   multiline.pattern: '^[[:space:]]+(at|\.{3})[[:space:]]+\b|^Caused by:|^com|^java'
   multiline.negate: false
@@ -116,6 +116,34 @@ filebeat.inputs:
 ##########################
 
 
+
+#- type: log
+#  paths:
+#     - ${AUTOMATION_DIR}\autologs\*.log
+#     - ${AUTOMATION_DIR}\autologs1\*.log
+#  include_lines: ['"flags.*DELETED"']
+#  tags: ["AUTOMATION", "AUTOMATION-CASE-ITEM", "IRREGULAR-FILES", "DELETED"]
+#  scan_frequency: 10s
+
+#- type: log
+#  paths:
+#     - ${AUTOMATION_DIR}\autologs\*.log
+#     - ${AUTOMATION_DIR}\autologs1\*.log
+#  include_lines: ['"flags.*CORRUPTED"']
+#  tags: ["AUTOMATION", "AUTOMATION-CASE-ITEM", "IRREGULAR-FILES", "CORRUPTED"]
+#  scan_frequency: 10s
+ 
+#- type: log
+#  paths:
+#     - ${AUTOMATION_DIR}\autologs\*.log
+#    - ${AUTOMATION_DIR}\autologs1\*.log
+#  include_lines: ['"flags.*ENCRYPTED"']
+#  tags: ["AUTOMATION", "AUTOMATION-CASE-ITEM", "IRREGULAR-FILES", "ENCRYPTED"]
+#  scan_frequency: 10s
+  
+###########################
+
+
 - type: log
   paths:
      - ${AUTOMATION_DIR}\autologs\*.log
@@ -123,48 +151,48 @@ filebeat.inputs:
   include_lines: ['[S]\s*[T]\s*[A]\s*[R]\s*[T]\s*[I]\s*[N]\s*[G]\s*[R]\s*[U]\s*[N]\s*[N]\s*[E]\s*[R]']
   exclude_lines: ['["]\s*[n]\s*[m]\s*[s]\s*["]']
   
-  tags: ["AUTOMATION", "AUTOMATION-STARTING-RUNNER", "STARTING-RUNNER"]
-  scan_frequency: 10s
+  tags: ["AUTOMATION", "AUTOMATION-STARTING-RUNNER", "STARTING-RUNNER", "RU"]
+  scan_frequency: 5s
 
 - type: log
   paths:
      - ${AUTOMATION_DIR}\autologs\*.log
      - ${AUTOMATION_DIR}\autologs1\*.log
   include_lines: ['[Ss]\s*[Tt]\s*[Aa]\s*[Rr]\s*[Tt]\s*[Ii]\s*[Nn]\s*[Gg]\s*[Ss]\s*[Tt]\s*[Aa]\s*[Gg]\s*[Ee]']
-  tags: ["AUTOMATION", "AUTOMATION-STARTING-STAGE", "STARTING-STAGE"]
-  scan_frequency: 10s
+  tags: ["AUTOMATION", "AUTOMATION-STARTING-STAGE", "STARTING-STAGE","ST"]
+  scan_frequency: 5s
 
 - type: log
   paths:
      - ${AUTOMATION_DIR}\autologs\*.log
      - ${AUTOMATION_DIR}\autologs1\*.log
   include_lines: ['[Ff]\s*[Aa]\s*[Ii]\s*[Ll]\s*[Ee]\s*[Dd]\s*[Rr]\s*[Uu]\s*[Nn]\s*[Nn]\s*[Ee]\s*[Rr]']
-  tags: ["AUTOMATION", "AUTOMATION-FAILED-RUNNER", "ENDING-RUNNER"]
-  scan_frequency: 10s
+  tags: ["AUTOMATION", "AUTOMATION-FAILED-RUNNER", "ENDING-RUNNER", "RU"]
+  scan_frequency: 5s
 
 - type: log
   paths:
      - ${AUTOMATION_DIR}\autologs\*.log
      - ${AUTOMATION_DIR}\autologs1\*.log
   include_lines: ['[Ff]\s*[Ii]\s*[Nn]\s*[Ii]\s*[Ss]\s*[Hh]\s*[Ee]\s*[Dd]\s*[Rr]\s*[Uu]\s*[Nn]\s*[Nn]\s*[Ee]\s*[Rr]']
-  tags: ["AUTOMATION", "AUTOMATION-FINISHED-RUNNER", "ENDING-RUNNER"]
-  scan_frequency: 10s
+  tags: ["AUTOMATION", "AUTOMATION-FINISHED-RUNNER", "ENDING-RUNNER", "RU"]
+  scan_frequency: 5s
 
 - type: log
   paths:
      - ${AUTOMATION_DIR}\autologs\*.log
      - ${AUTOMATION_DIR}\autologs1\*.log
   include_lines: ['[Ff]\s*[Aa]\s*[Ii]\s*[Ll]\s*[Ee]\s*[Dd]\s*[Ss]\s*[Tt]\s*[Aa]\s*[Gg]\s*[Ee]']
-  tags: ["AUTOMATION", "AUTOMATION-FAILED-STAGE", "ENDING-STAGE"]
-  scan_frequency: 10s
+  tags: ["AUTOMATION", "AUTOMATION-FAILED-STAGE", "ENDING-STAGE", "ST"]
+  scan_frequency: 5s
 
 - type: log
   paths:
      - ${AUTOMATION_DIR}\autologs\*.log
      - ${AUTOMATION_DIR}\autologs1\*.log
   include_lines: ['[Ff]\s*[Ii]\s*[Nn]\s*[Ii]\s*[Ss]\s*[Hh]\s*[Ee]\s*[Dd]\s*[Ss]\s*[Tt]\s*[Aa]\s*[Gg]\s*[Ee]']
-  tags: ["AUTOMATION", "AUTOMATION-FINISHED-STAGE","ENDING-STAGE"]
-  scan_frequency: 10s
+  tags: ["AUTOMATION", "AUTOMATION-FINISHED-STAGE","ENDING-STAGE","ST"]
+  scan_frequency: 5s
   
   
 ###############################
@@ -7142,15 +7170,23 @@ processors:
     target: "automation"
     fields:
       kind: "Unrecognised" 
-
+##########################
 - add_fields:
     when:
       contains:
         tags: "STARTING-RUNNER"
     target: "automation"
     fields:
-      running: "Running"      
-            
+      running: "Running"
+
+- add_fields:
+    when:
+      contains:
+        tags: "STARTING-RUNNER"
+    target: ""
+    fields:
+      starting_runner: "STARTING-RUNNER" 
+###########################            
 - add_fields:
     when:
       contains:
@@ -7162,10 +7198,28 @@ processors:
 - add_fields:
     when:
       contains:
+        tags: "ENDING-RUNNER"
+    target: ""
+    fields:
+      ending_runner: "ENDING-RUNNER"  
+ ##################################     
+- add_fields:
+    when:
+      contains:
         tags: "STARTING-STAGE"
     target: "automation"
     fields:
-      running: "Running" 
+      running: "Running"
+      
+- add_fields:
+    when:
+      contains:
+        tags: "STARTING-STAGE"
+    target: ""
+    fields:
+      starting_stage: "STARTING-STAGE"
+##################################      
+      
       
 - add_fields:
     when:
@@ -7173,10 +7227,39 @@ processors:
         tags: "ENDING-STAGE"
     target: "automation"
     fields:
-      running: "Finished" 
+      running: "Finished"
+
+- add_fields:
+    when:
+      contains:
+        tags: "ENDING-STAGE"
+    target: ""
+    fields:
+      ending_stage: "ENDING-STAGE"      
             
-############################      
-      
+############################
+- add_tags:
+    when:
+      contains:
+        automation.flags: "CORRUPTED"
+    tags: ["CORRUPTED"]
+    target: ""
+
+- add_tags:
+    when:
+      contains:
+        automation.flags: "ENCRYPTED"
+    tags: ["ENCRYPTED"]
+    target: ""
+    
+- add_tags:
+    when:
+      contains:
+        automation.flags: "DELETED"
+    tags: ["DELETED"]
+    target: ""
+
+############################
 - add_tags:
     when:
       contains:
@@ -7232,6 +7315,20 @@ processors:
     fields:
         - from: automation.ts
           to: ts
+    fail_on_error: false
+    ignore_missing: true
+
+- copy_fields:
+    fields:
+        - from: automation.runner
+          to: runner
+    fail_on_error: false
+    ignore_missing: true
+    
+- copy_fields:
+    fields:
+        - from: agent.hostname
+          to: host_name
     fail_on_error: false
     ignore_missing: true
 
