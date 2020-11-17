@@ -29,6 +29,7 @@ func Migrate(db *gorm.DB) error {
 		&api.Type{},
 		&api.InApp{},
 		&api.SyncDescendants{},
+		&api.ScanNewChildItems{},
 	).Error
 }
 

@@ -103,6 +103,10 @@ api:
     - syncDescendants:
         search: tag:items-to-sync
 
+    - scanNewChildItems:
+        profile: Default # processing profile to use for the scan
+        search: tag:items-to-scan
+
     # Switches are available from v16
     switches:
       # - -Dnuix.processing.sharedTempDirectory=<path> ## Change this to override worker temp location otherwise defined in the processing profile

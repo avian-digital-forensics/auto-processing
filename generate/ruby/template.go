@@ -401,7 +401,40 @@ begin
   sync_processor.sync(sync_items, nil, nil)
   sync_processor.process
 
-  <% } %><%= if (ocr(s)) { %>ocr_processor = $utilities.createOcrProcessor
+  <% } %><%= if (scanNewChildItems(s)) { %>scan_processor = single_case.create_processor
+    scan_processor.set_processing_profile('<%= s.ScanNewChildItems.Profile %>')
+    processed_count = 0
+    scan_processor.when_item_processed do |info|
+    semaphore = Mutex.new
+    semaphore.synchronize {
+      processed_count += 1
+      log_processed_item(
+        '<%= stageName(s) %>', 
+        <%= s.ID %>, 
+        'Processed item', 
+        processed_count, 
+        info.mime_type, 
+        info.guid_path, 
+        '',
+        info.is_corrupted,
+        info.is_deleted,
+        info.is_encrypted,
+      )
+    }
+    end
+    
+    log_info('<%= stageName(s) %>', <%= s.ID %>, 'Searching for items to scan with query: <%= formatQuotes(s.ScanNewChildItems.Search) %>')
+    scan_items = single_case.search('<%= formatQuotes(s.ScanNewChildItems.Search) %>')
+    log_debug('<%= stageName(s) %>', <%= s.ID %>, 'Found #{scan_items.length} items to scan.')
+
+    log_info('<%= stageName(s) %>', <%= s.ID %>, 'Set scan-items')
+    scan_processor.scan_for_new_child_items(scan_items)
+
+    log_info('<%= stageName(s) %>', <%= s.ID %>, 'Start scanning items')
+    scan_processor.process
+    log_debug('<%= stageName(s) %>', <%= s.ID %>, 'Finished scanning items')
+
+    <% } %><%= if (ocr(s)) { %>ocr_processor = $utilities.createOcrProcessor
   # Check if the profile exists in the store
   unless $utilities.get_ocr_profile_store.contains_profile('<%= s.Ocr.Profile %>')
     # Import the profile

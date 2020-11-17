@@ -207,6 +207,7 @@ func (s RunnerService) List(ctx context.Context, r api.RunnerListRequest) (*api.
 		Preload("Stages.Populate").
 		Preload("Stages.InApp").
 		Preload("Stages.SyncDescendants").
+		Preload("Stages.ScanNewChildItems").
 		Find(&runners).Error
 	if err != nil {
 		s.logger.Error("Cannot get runners-list", zap.String("exception", err.Error()))
@@ -249,6 +250,7 @@ func (s RunnerService) Delete(ctx context.Context, r api.RunnerDeleteRequest) (*
 		Preload("Stages.Populate").
 		Preload("Stages.InApp").
 		Preload("Stages.SyncDescendants").
+		Preload("Stages.ScanNewChildItems").
 		Preload("CaseSettings.Case").
 		Preload("CaseSettings.CompoundCase").
 		Preload("CaseSettings.ReviewCompound").
@@ -649,6 +651,7 @@ func getPreloadedRunner(db *gorm.DB, runner *api.Runner) error {
 		Preload("Stages.Populate.Types").
 		Preload("Stages.InApp").
 		Preload("Stages.SyncDescendants").
+		Preload("Stages.ScanNewChildItems").
 		Preload("CaseSettings.Case").
 		Preload("CaseSettings.CompoundCase").
 		Preload("CaseSettings.ReviewCompound").

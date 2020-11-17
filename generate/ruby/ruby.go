@@ -89,6 +89,9 @@ func Generate(remoteAddress, scriptDir string, runner api.Runner) (string, error
 	ctx.Set("populate", func(s *api.Stage) bool { return s.Populate != nil && !avian.Finished(s.Populate.Status) })
 	ctx.Set("reload", func(s *api.Stage) bool { return s.Reload != nil && !avian.Finished(s.Reload.Status) })
 	ctx.Set("inApp", func(s *api.Stage) bool { return s.InApp != nil && !avian.Finished(s.InApp.Status) })
+	ctx.Set("scanNewChildItems", func(s *api.Stage) bool {
+		return s.ScanNewChildItems != nil && !avian.Finished(s.ScanNewChildItems.Status)
+	})
 	ctx.Set("syncDescendants", func(s *api.Stage) bool { return s.SyncDescendants != nil && !avian.Finished(s.SyncDescendants.Status) })
 	ctx.Set("stageName", func(s *api.Stage) string { return avian.Name(s) })
 	ctx.Set("formatQuotes", func(s string) template.HTML { return template.HTML(s) })

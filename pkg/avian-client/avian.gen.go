@@ -1780,6 +1780,9 @@ type Stage struct {
 
 	// SyncDescendants syncs descendants for the specified items
 	SyncDescendants *SyncDescendants `json:"syncDescendants" yaml:"syncDescendants"`
+
+	// ScanNewChildItems scans for new child items based on a search
+	ScanNewChildItems *ScanNewChildItems `json:"scanNewChildItems" yaml:"scanNewChildItems"`
 }
 
 type StageResponse struct {
@@ -1795,6 +1798,22 @@ type RunnerStartRequest struct {
 
 // RunnerStartResponse is the output-object for starting a runner by id
 type RunnerStartResponse struct {
+}
+
+type ScanNewChildItems struct {
+	datastore.Base
+
+	// StageID foreign-key for stage-table
+	StageID uint `json:"stageID" yaml:"stageID"`
+
+	// Profile for processing
+	Profile string `json:"profile" yaml:"profile"`
+
+	// Search for the items to sync
+	Search string `json:"search" yaml:"search"`
+
+	// Status for the stage
+	Status int64 `json:"status" yaml:"status"`
 }
 
 // SearchAndTag searches and tags data in a Nuix-case

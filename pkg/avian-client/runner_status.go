@@ -64,6 +64,10 @@ func StageState(s *api.Stage) int64 {
 		return s.SyncDescendants.Status
 	}
 
+	if s.ScanNewChildItems != nil {
+		return s.ScanNewChildItems.Status
+	}
+
 	return 0
 }
 
@@ -98,6 +102,10 @@ func (s *Stage) Status() string {
 
 	if s.SyncDescendants != nil {
 		return getStatus(s.SyncDescendants.Status)
+	}
+
+	if s.ScanNewChildItems != nil {
+		return getStatus(s.ScanNewChildItems.Status)
 	}
 
 	return "Unknown"
@@ -136,6 +144,10 @@ func Name(s *api.Stage) string {
 		return "SyncDescendants"
 	}
 
+	if s.ScanNewChildItems != nil {
+		return "ScanNewChildItems"
+	}
+
 	return "Unknown"
 }
 
@@ -172,6 +184,10 @@ func (s *Stage) Name() string {
 		return "SyncDescendants"
 	}
 
+	if s.ScanNewChildItems != nil {
+		return "ScanNewChildItems"
+	}
+
 	return "Unknown"
 }
 
@@ -194,6 +210,8 @@ func SetStatusRunning(stage *api.Stage) {
 		stage.InApp.Status = StatusRunning
 	} else if stage.SyncDescendants != nil {
 		stage.SyncDescendants.Status = StatusRunning
+	} else if stage.ScanNewChildItems != nil {
+		stage.ScanNewChildItems.Status = StatusRunning
 	}
 	return
 }
@@ -215,6 +233,8 @@ func SetStatusFailed(stage *api.Stage) {
 		stage.InApp.Status = StatusFailed
 	} else if stage.SyncDescendants != nil {
 		stage.SyncDescendants.Status = StatusFailed
+	} else if stage.ScanNewChildItems != nil {
+		stage.ScanNewChildItems.Status = StatusFailed
 	}
 }
 
@@ -235,6 +255,8 @@ func SetStatusFinished(stage *api.Stage) {
 		stage.InApp.Status = StatusFinished
 	} else if stage.SyncDescendants != nil {
 		stage.SyncDescendants.Status = StatusFinished
+	} else if stage.ScanNewChildItems != nil {
+		stage.ScanNewChildItems.Status = StatusFinished
 	}
 }
 
@@ -255,6 +277,8 @@ func HasFinished(s *api.Stage) bool {
 		return Finished(s.InApp.Status)
 	} else if s.SyncDescendants != nil {
 		return Finished(s.SyncDescendants.Status)
+	} else if s.ScanNewChildItems != nil {
+		return Finished(s.ScanNewChildItems.Status)
 	}
 	return false
 }
@@ -275,6 +299,8 @@ func (s *Stage) Nil() bool {
 	} else if s.InApp != nil {
 		return false
 	} else if s.SyncDescendants != nil {
+		return false
+	} else if s.ScanNewChildItems != nil {
 		return false
 	}
 	return true

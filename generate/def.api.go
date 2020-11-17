@@ -535,6 +535,9 @@ type Stage struct {
 
 	// SyncDescendants syncs descendants for the specified items
 	SyncDescendants *SyncDescendants
+
+	// ScanNewChildItems scans for new child items based on a search
+	ScanNewChildItems *ScanNewChildItems
 }
 
 // Process -stage processes data into a Nuix-case
@@ -737,6 +740,23 @@ type SyncDescendants struct {
 
 	// StageID foreign-key for stage-table
 	StageID uint
+
+	// Search for the items to sync
+	Search string
+
+	// Status for the stage
+	Status int64
+}
+
+type ScanNewChildItems struct {
+	// Base for the datastore
+	datastore.Base
+
+	// StageID foreign-key for stage-table
+	StageID uint
+
+	// Profile for processing
+	Profile string
 
 	// Search for the items to sync
 	Search string
