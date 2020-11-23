@@ -10,13 +10,23 @@ api:
         username: user
         password: secret
 
-        # Specify path to nuix for the sever
+        # Specify path to nuix for the server
         nuixPath: C:\Program Files\Nuix\Nuix 8.4
 
-        avianScripts: C:\t
+        # Specify which location the service should transfer avian-scripts from to the specified server
+        avianScripts: C:\avian-scripts-prepare-in-app-for-automation
 
     # Specify another server
     - server:
         hostname: sune
         operatingSystem: windows
+
+        # Specify username and password is required from release 20
+        username: user
+        password: secret
+
+        # Specify path to nuix for the server
         nuixPath: C:\Program Files\Nuix\Nuix 8.4
+
+        # Specify which location the service should transfer avian-scripts from to the specified server
+        avianScripts: C:\avian-scripts-prepare-in-app-for-automation

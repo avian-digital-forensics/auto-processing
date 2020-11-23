@@ -107,6 +107,29 @@ api:
         profile: Default # processing profile to use for the scan
         search: tag:items-to-scan
 
+     # inApp-scripts example
+     #
+     # to run inApp-scripts you need to download
+     # the repository from https://github.com/avian-digital-forensics/avian-scripts
+     # specify in the server.yml to the path where you have downloaded the repository
+     - inApp:
+        # name of the inApp-script
+        name: import_printed_images
+        # config of the inApp-script (specified in another .yml)
+        config: C:\auto-processing-v21\example\import_printed_images.yml
+
+    - inApp:
+        # name of the inApp-script
+        name: number_of_descendants
+        # config of the inApp-script (specified in another .yml)
+        config: C:\auto-processing-v21\example\in-app-configs\number_of_descendants.yml
+
+    - inApp:
+        # name of the inApp-script
+        name: tag_exchange_emails_with_duplicates
+        # config of the inApp-script (specified in another .yml)
+        config: C:\auto-processing-v21\example\in-app-configs\tag_exchange_emails_with_duplicates.yml
+
     # Switches are available from v16
     switches:
       # - -Dnuix.processing.sharedTempDirectory=<path> ## Change this to override worker temp location otherwise defined in the processing profile
