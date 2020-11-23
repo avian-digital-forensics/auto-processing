@@ -1,0 +1,6 @@
+archived_prefix: arch-prefix # all emails containing this text will be treated as exchange server emails.
+archived_tag: archived-tag # all emails containing the above prefix will receive this tag.
+archived_has_duplicate_tag: archive-dupli # all archived emails with duplicates will receive this tag.
+archived_missing_duplicate_tag: missing-dupli # all archived emails without duplicates will receive this tag.
+has_missing_attachments_tag: missing-attach # all archived emails with children but no duplicate receive this tag.
+exclude_archived_items_with_duplicates: true # all archived emails with duplicates will be excluded if this is set to true.
