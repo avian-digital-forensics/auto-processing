@@ -1,0 +1,102 @@
+
+metricbeat.config.modules:
+  
+  path: ${path.config}/modules.d/*.yml
+
+  
+  reload.enabled: true
+
+ 
+
+setup.template.settings:
+  index.number_of_shards: 1
+  index.number_of_replicas: 0
+  index.codec: best_compression
+  #_source.enabled: false
+
+#setup.dashboards.enabled: true
+#setup.template.name: "metricbeat"
+#setup.template.pattern: "metricbeat-*"
+
+setup.kibana:
+
+  host: "${ES_HOST}:5601"
+  
+output.logstash:
+  
+  hosts: ["${ES_HOST}:5044"]
+
+#output.elasticsearch:
+#  hosts: ["${ES_HOST}:9200"]
+
+
+
+processors:
+  - add_host_metadata: ~
+  - add_cloud_metadata: ~
+  - add_docker_metadata: ~
+  - add_kubernetes_metadata:  
+
+  - add_tags: 
+     tags: [METRICBEAT]
+  
+  - add_tags: 
+     when:
+       contains:
+         process.name: "nuix_single_worker.exe"
+     tags: [NUIX-SINGLE-WORKER]
+  
+  - add_tags: 
+     when:
+        or:
+            - contains:
+                system.filesystem.type: "fixed"
+            - contains:
+                system.filesystem.type: "removable"         
+     tags: [DISK-SPACE-UTIL]  
+
+  - add_tags: 
+     when:
+       contains:
+         process.name: "nuix_console.exe"
+     tags: [NUIX-CONSOLE]
+     
+  - copy_fields: 
+     when:
+       contains:
+         tags: "NUIX-SINGLE-WORKER"
+     fields:
+        - from: process.name
+          to: process_name
+        - from: process.pid
+          to: process_pid
+     fail_on_error: false
+     ignore_missing: true  
+ 
+ 
+  - copy_fields: 
+     when:
+       contains:
+         tags: "DISK-SPACE-UTIL"
+     fields:
+        - from: system.filesystem.device_name
+          to: system_filesystem_device_name
+        - from: system.filesystem.free
+          to: system_filesystem_free
+        - from: system.filesystem.total
+          to: system_filesystem_total
+        - from: system.filesystem.used.bytes
+          to: system_filesystem_used_bytes
+        - from: system.filesystem.available
+          to: system_filesystem_available          
+     fail_on_error: false
+     ignore_missing: true
+     
+     
+     
+environment: "automation rel 20"
+
+    
+hosts:
+      - http://${ES_HOST}:8200
+      

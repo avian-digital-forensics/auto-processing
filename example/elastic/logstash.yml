@@ -4,30 +4,6 @@ input {
   }
 }
 
-#filter {
-#    if "AUTOMATION" in [tags] {
-#        date {
-#            match => [ "[automation][ts]", "UNIX"]
-#            target => "time-test1"
-#            }
-#        ruby {
-#            code => "event.set('[automation][ts]',event.get('[automation][ts]')+ 3600)"
-#        }    
-#        date {
-#            match => [ "[automation][ts]", "UNIX"]
-#            target => "[automation][timestamp]"
-#        }
-#        ruby {
-#        code => '
-#            t = event.get("time-test1")
-#            event.set("automation_timestamp_fixed", Time.at(t.to_f).strftime("%Y-%m-%d %H:%M:%S"))
-#        '
-#        }
-#
-#    }
-#}
-
-#code => 'event.set("[nuix_log][host]", event.get("[agent][hostname]"))'
 
 
 filter {
@@ -48,12 +24,6 @@ filter {
 }
 
 
-
-
-
-
-
-
 filter {
     if "MULTILINE" in [tags] {
         grok {
@@ -63,9 +33,13 @@ filter {
         grok {
             match => {"message" => "%{LOGLEVEL:level}%{GREEDYDATA:log_message}"}
         }   
-    } else if "_grokparsefailure" in [tags]  {
+    } else if "METRICBEAT" in [tags]  {
         grok {
             match => {"message" => "%{GREEDYDATA:log_message}"}
+        }   
+    } else if "_grokparsefailure" in [tags]  {
+        grok {
+            match => {"message" => "%{GREEDYDATA:log_message}"}        
         }
     } else if "OCR-LOG" in [tags]  {
         grok {
@@ -133,7 +107,7 @@ filter {
             '
             # uppdatera mappen
 #            push_previous_map_as_event => true 
-            timeout => 86400
+            timeout => 2629743
             inactivity_timeout => 300            
             map_action => "update"                    
             # avsluta tasken (eftersom vi har fått runner-end)
@@ -175,6 +149,45 @@ filter {
 }
 
 filter {
+    if "NUIX-SINGLE-WORKER" in [tags] {
+        mutate { convert => ["process_pid", "string"] }
+        ruby {
+            code => '
+                   event.set("nuix_running_worker", event.get("[process][name]") + "-" + event.get("process_pid"))                 
+            '
+        }
+    }
+}
+
+#filter {
+#    if "DISK-SPACE-UTIL" in [tags] {
+#        mutate { convert => ["[system][filesystem][used][bytes]", "string"] }
+#        mutate { convert => ["[system][filesystem][total]", "string"] }        
+#        mutate {
+#            add_field => {
+#                "nuix_disc_event" => " Drive %{[system][filesystem][device_name]} %{[system][filesystem][used][bytes]} of %{[system][filesystem][total]}"
+#            }
+#        }
+#    }
+#}
+
+#filter {
+#    if "DISK-SPACE-UTIL" in [tags] {
+#        mutate { convert => ["system_filesystem_free", "string"] }
+#        mutate { convert => ["system_filesystem_total", "string"] } 
+#        mutate {
+#            add_field => {
+#                "nuix_disc_event" => " Drive %{[system][filesystem][device_name]} %{system_filesystem_free} of %{system_filesystem_total}"
+#        }    
+#    }
+#}
+
+
+############ From here Metricbeat
+
+#event.set("nuix_running_worker", "Host=" + event.get("[agent][hostname]") + event.get("[process][name]") + event.get("process_pid"))
+
+filter {
     if "NUIX-LOG" in [tags] {
         date {
             match => [ "nuix_timestamp", "ISO8601", "YYYY-MM-dd HH:mm:ss", "YYYY-MM-dd HH:mm:ss.ZZZ" ]
@@ -184,89 +197,29 @@ filter {
     }
 
 }
-###############
+
+
 filter {
     if "RU" in [tags] {        
         elapsed {
             start_tag => "STARTING-RUNNER"
             end_tag => "ENDING-RUNNER"
             periodic_flush => false
-            unique_id_field => "host_name"
-            timeout => 86400
+            unique_id_field => "runner"
+            timeout => 2629743
             new_event_on_match => false
         }        
-    }
-}
-
-##############
-filter {
-    if "ST" in [tags] {        
+    } else if "ST" in [tags] {        
         elapsed {
             start_tag => "STARTING-STAGE"
             end_tag => "ENDING-STAGE"
             periodic_flush => false
-            unique_id_field => "host_name"
-            timeout => 86400
+            unique_id_field => "[automation][stage_id]"
+            timeout => 2629743
             new_event_on_match => false
         }        
     }
 }
-
-
-#filter {
-#   grok {
-#     match => [ "message", "%{LOGLEVEL:loglevel} - %{NOTSPACE:taskid} - %{NOTSPACE:logger} - %{WORD:label}( - %{INT:duration:int})?" ]
-#   }
-
-#   if [starting_runner] == "STARTING-RUNNER" {
-#     aggregate {
-#       task_id => "%{host_name}"
-#       code => "map['sql_duration'] = 0"
-#       code => "map['start_timestamp'] = event['@timestamp']"
-#       map_action => "create"
-#     }
-#   }
-
-#   if [logger] == "SQL" {
-#     aggregate {
-#       task_id => "%{taskid}"
-#       code => "map['sql_duration'] += event.get('duration')"
-#       map_action => "update"
-#     }
-#   }
-
-#   if [ending_runner] == "ENDING-RUNNER" {
-#     aggregate {
-#       task_id => "%{host_name}"
-#       code => 'event.set("[elapsed_hr1]", event["@timestamp"] - map["start_timestamp"])'
-#       map_action => "update"
-#       timeout => 120
-#    }
-
-#   }
-# }
-
-
-#filter {
-#    if [starting_runner] {
-#        aggregate {
-#             task_id => "%{host_name}"
-#             map_action => "create"
-#             code => "map['start_timestamp'] = event['@timestamp']"
-#       }
-#    }
-#    if [ending_runner] {
-#        aggregate {
-#             task_id => "%{host_name}"
-#             map_action => "update"
-#             code => "event['duration'] = event['@timestamp'] - map['start_timestamp']"
-#             code => "event.set('timestamp_runner_aggragated_start', map['duration'])"
-#            end_of_task => true
-#        }        
-#    }
-#}
-
-
 
 filter {
     if [elapsed_time] {
@@ -278,98 +231,6 @@ filter {
     }
 }
 
-
-#filter {
-#    if "STARTING-RUNNER" in [tags] {
-#            mutate { add_field => { "runner" => "%{[automation][runner]}" } }
-#            aggregate {
-#            task_id => "%{runner}"
-#            code => "map['startstamp'] = event.get('@timestamp')"
-#            map_action => "create"
-#            add_tag => "metric"
-#        }
-#    }
-# }
-
-#filter {
-#    if "ENDING-RUNNER" in [tags] {
-#        mutate { add_field => { "runner" => "%{[automation][runner]}" } }
-#        aggregate {
-#            task_id => "%{runner}"
-#            code => 'event_set("time_millis", ((Time.parse(event.get("@timestamp")).to_f * Time.parse(map["startstamp"]).to_f) * 1000).to_i)'
-#            map_action => "create"
-#            end_of_task => true
-#            add_tag => "metric"
-#       }
-#   }
-#}    
-
-#filter {
-#    if "STARTING-RUNNER" in [tags] {
-#        mutate { add_field => { "runner" => "%{[automation][runner]}" } }
-#        aggregate {
-#            task_id => "%{runner}"
-#            map_action => "create"
-#            code => "map['start_timestamp'] = event['@timestamp']"
-#        }
-#}
-#    else if "ENDING-RUNNER" in [tags] {
-#        mutate { add_field => { "runner" => "%{[automation][runner]}" } }
-#        aggregate {
-#            task_id => "%{runner}"
-#            map_action => "update"
-#            code => 'event.set("[elapsed_hr1]", event.get["@timestamp"] - map["start_timestamp"])'
-#            end_of_task => true
-#        }
-#    }
-#}
-
-#'event.set("[nuix_log][host]", event.get("[agent][hostname]"))'
-
-########################
-#filter {
-
-#    mutate { add_field => { "runner" => "%{[automation][runner]}" } }
-#    
-#    elapsed {
-#      start_tag => "STARTING-RUNNER"
-#      end_tag => "ENDING-RUNNER"
-#      periodic_flush => true
-#      unique_id_field => "runner"
-#      timeout => 86400
-#      new_event_on_match => false
-#    }
-#    
-#    elapsed {
-#      start_tag => "STARTING-STAGE"
-#      end_tag => "ENDING-STAGE"
-#      periodic_flush => true
-#      unique_id_field => "runner"
-#      timeout => 86400
-#      new_event_on_match => false
-#    }
-#    
-#    if [elapsed_time] {
-#         ruby {
-#            code => '
-#                event.set("[elapsed_hr]", Time.at(event.get("[elapsed_time]")).utc.strftime("%T.%L"))
-#            '
-#        }
-#    }
-#}
-
-
-
-
-
-
-   
-
-
-
-
-
-
 filter {
    if "STARTING-RUNNER" in [tags] {
         ruby {
@@ -379,10 +240,10 @@ filter {
         '
         }
         mutate {
-            add_field => { "elapsed_timestamp_event_end_runner" => "Still Running" }
+            add_field => { "elapsed_timestamp_event_end_runner" => "--------------->" }
         }        
         mutate {
-            add_field => { "elapsed_hr" => "Still Running" }
+            add_field => { "elapsed_hr" => "Runner Started" }
         }
     }
   }
@@ -396,10 +257,10 @@ filter {
         '
         }
         mutate {
-            add_field => { "elapsed_timestamp_event_end_stage" => "Still Running" }
+            add_field => { "elapsed_timestamp_event_end_stage" => "--------------->" }
         }        
         mutate {
-            add_field => { "elapsed_hr" => "Still Running" }
+            add_field => { "elapsed_hr" => "Stage Started" }
         }
     }
   }
@@ -450,11 +311,10 @@ filter {
   }
 }
 
-    
 
 filter {
   mutate {
-    remove_tag => [ "beats_input_codec_plain_applied" ]
+    remove_tag => [ "beats_input_codec_plain_applied", "beats_input_raw_event" ]
   }
 }
 
