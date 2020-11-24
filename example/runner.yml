@@ -4,7 +4,7 @@ api:
     name: runner-test
     
     # Specify the host for the remote-run (localhost if local-run)
-    hostname: dev01
+    hostname: dev01.avian.dk
 
     # Set the address for the licence-source
     nms: license.avian.dk
@@ -112,7 +112,7 @@ api:
      # to run inApp-scripts you need to download
      # the repository from https://github.com/avian-digital-forensics/avian-scripts
      # specify in the server.yml to the path where you have downloaded the repository
-     - inApp:
+    - inApp:
         # name of the inApp-script
         name: import_printed_images
         # config of the inApp-script (specified in another .yml)
