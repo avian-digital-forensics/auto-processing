@@ -490,6 +490,17 @@ type Case struct {
 
 	// Investigator of the case
 	Investigator string
+
+	ElasticSearchID uint
+	ElasticSearch   *Elasticsearch
+}
+
+type Elasticsearch struct {
+	datastore.Base
+	ClusterName           string
+	NuixTransportHost     string
+	IndexNumberOfReplicas int
+	IndexNumberOfShards   int
 }
 
 type StageRequest struct {

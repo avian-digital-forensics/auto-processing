@@ -169,9 +169,9 @@ def open_case(settings)
       caze = @case_factory.open(settings["directory"])
     end
   rescue => e
-    log_error("", 0, "Cannot create/open case, case might already be open", e.backtrace)
-    STDERR.puts("problem creating new case, case might already be open: #{e.backtrace}")
-    failed_runner("problem creating new case, case might already be open: #{e.backtrace}")
+    log_error("", 0, "Cannot create/open case, case might already be open", e)
+    STDERR.puts("problem creating new case, case might already be open: #{e}")
+    failed_runner("problem creating new case, case might already be open: #{e}")
     STDOUT.puts('FINISHED RUNNER')
     exit(false)
   end
@@ -239,7 +239,13 @@ single_case = open_case({
   'directory' => '<%= runner.CaseSettings.Case.Directory %>',
   'description' => '<%= runner.CaseSettings.Case.Description %>',
   'investigator' => '<%= runner.CaseSettings.Case.Investigator %>',
-  'compound' => false,
+  'compound' => false,<%= if (elasticSearch(runner)) { %>
+  'elasticSearchSettings' => {
+    'cluster.name' => '<%= runner.CaseSettings.Case.ElasticSearch.ClusterName %>',
+    'nuix.transport.hosts' => '<%= runner.CaseSettings.Case.ElasticSearch.NuixTransportHost %>',
+    'index.number_of_shards' => <%= runner.CaseSettings.Case.ElasticSearch.IndexNumberOfShards %>.to_i,
+    'index.number_of_replicas' => <%= runner.CaseSettings.Case.ElasticSearch.IndexNumberOfReplicas %>.to_i,
+  },<% } %>
 })
 <%= if (process(runner)) { %><%= if (!getProcessingFailed(runner)) { %>
 # Create or open the compound-case

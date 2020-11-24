@@ -17,6 +17,7 @@ func Migrate(db *gorm.DB) error {
 		&api.NuixSwitch{},
 		&api.CaseSettings{},
 		&api.Case{},
+		&api.Elasticsearch{},
 		&api.Evidence{},
 		&api.Stage{},
 		&api.Process{},

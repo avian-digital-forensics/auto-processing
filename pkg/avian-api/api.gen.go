@@ -521,7 +521,9 @@ type Case struct {
 	// Description of the case
 	Description string `json:"description" yaml:"description"`
 	// Investigator of the case
-	Investigator string `json:"investigator" yaml:"investigator"`
+	Investigator    string         `json:"investigator" yaml:"investigator"`
+	ElasticSearchID uint           `json:"elasticSearchID" yaml:"elasticSearchID"`
+	ElasticSearch   *Elasticsearch `json:"elasticSearch" yaml:"elasticSearch"`
 }
 
 // CaseSettings holds information about the cases if Processing-stage is used for a
@@ -539,6 +541,14 @@ type CaseSettings struct {
 	// ReviewCompound holds the information for the review-compound
 	ReviewCompoundID uint  `json:"reviewCompoundID" yaml:"reviewCompoundID"`
 	ReviewCompound   *Case `json:"reviewCompound" yaml:"reviewCompound"`
+}
+
+type Elasticsearch struct {
+	datastore.Base
+	ClusterName           string `json:"clusterName" yaml:"clusterName"`
+	NuixTransportHost     string `json:"nuixTransportHost" yaml:"nuixTransportHost"`
+	IndexNumberOfReplicas int    `json:"indexNumberOfReplicas" yaml:"indexNumberOfReplicas"`
+	IndexNumberOfShards   int    `json:"indexNumberOfShards" yaml:"indexNumberOfShards"`
 }
 
 // Evidence holds information about a specific evidence

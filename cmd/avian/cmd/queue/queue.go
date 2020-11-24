@@ -319,7 +319,7 @@ func getRunners(db *gorm.DB) ([]*api.Runner, error) {
 		Preload("Stages.InApp").
 		Preload("Stages.SyncDescendants").
 		Preload("Stages.ScanNewChildItems").
-		Preload("CaseSettings.Case").
+		Preload("CaseSettings.Case.ElasticSearch").
 		Preload("CaseSettings.CompoundCase").
 		Preload("CaseSettings.ReviewCompound").
 		Preload("Switches").
@@ -339,7 +339,7 @@ func getRunnerByName(db *gorm.DB, name string) (*api.Runner, error) {
 		Preload("Stages.InApp").
 		Preload("Stages.SyncDescendants").
 		Preload("Stages.ScanNewChildItems").
-		Preload("CaseSettings.Case").
+		Preload("CaseSettings.Case.ElasticSearch").
 		Preload("CaseSettings.CompoundCase").
 		Preload("CaseSettings.ReviewCompound").
 		Find(&runner, "name = ?", name).Error

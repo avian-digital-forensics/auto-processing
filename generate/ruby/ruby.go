@@ -82,6 +82,7 @@ func Generate(remoteAddress, scriptDir string, runner api.Runner) (string, error
 	})
 
 	ctx.Set("getStages", func(r api.Runner) []*api.Stage { return r.Stages })
+	ctx.Set("elasticSearch", func(r api.Runner) bool { return r.CaseSettings.Case.ElasticSearch != nil })
 	ctx.Set("isNoProcessing", func(s *api.Stage) bool { return s.Process == nil })
 	ctx.Set("searchAndTag", func(s *api.Stage) bool { return s.SearchAndTag != nil && !avian.Finished(s.SearchAndTag.Status) })
 	ctx.Set("exclude", func(s *api.Stage) bool { return s.Exclude != nil && !avian.Finished(s.Exclude.Status) })

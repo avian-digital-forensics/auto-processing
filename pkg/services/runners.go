@@ -102,6 +102,7 @@ func (s RunnerService) Apply(ctx context.Context, r api.RunnerApplyRequest) (*ap
 		runner.ID = fromDB.ID
 		runner.CaseSettings.ID = fromDB.CaseSettings.ID
 		runner.CaseSettings.Case.ID = fromDB.CaseSettings.ID
+		runner.CaseSettings.Case.ElasticSearch.ID = fromDB.CaseSettings.Case.ElasticSearch.ID
 		runner.CaseSettings.CompoundCase.ID = fromDB.CaseSettings.CompoundCase.ID
 		runner.CaseSettings.ReviewCompound.ID = fromDB.CaseSettings.ReviewCompound.ID
 
@@ -231,11 +232,14 @@ func (s RunnerService) Get(ctx context.Context, r api.RunnerGetRequest) (*api.Ru
 
 func (s RunnerService) Delete(ctx context.Context, r api.RunnerDeleteRequest) (*api.RunnerDeleteResponse, error) {
 	s.logger.Debug("Getting runner to delete", zap.String("runner", r.Name))
-	if r.DeleteAllCases {
-		// Delete all cases associated with the runner
-	} else if r.DeleteCase {
-		// Delete the single-case for the runner
-	}
+	/*
+		Dont delete the cases
+		if r.DeleteAllCases {
+			// Delete all cases associated with the runner
+		} else if r.DeleteCase {
+			// Delete the single-case for the runner
+		}
+	*/
 
 	// start transaction for the delete
 	tx := s.DB.Begin()
@@ -251,7 +255,7 @@ func (s RunnerService) Delete(ctx context.Context, r api.RunnerDeleteRequest) (*
 		Preload("Stages.InApp").
 		Preload("Stages.SyncDescendants").
 		Preload("Stages.ScanNewChildItems").
-		Preload("CaseSettings.Case").
+		Preload("CaseSettings.Case.ElasticSearch").
 		Preload("CaseSettings.CompoundCase").
 		Preload("CaseSettings.ReviewCompound").
 		First(&runner, "name = ? OR id = ?", r.Name, r.Name).Error
@@ -652,7 +656,7 @@ func getPreloadedRunner(db *gorm.DB, runner *api.Runner) error {
 		Preload("Stages.InApp").
 		Preload("Stages.SyncDescendants").
 		Preload("Stages.ScanNewChildItems").
-		Preload("CaseSettings.Case").
+		Preload("CaseSettings.Case.ElasticSearch").
 		Preload("CaseSettings.CompoundCase").
 		Preload("CaseSettings.ReviewCompound").
 		Preload("Switches").
