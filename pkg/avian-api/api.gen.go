@@ -58,6 +58,7 @@ type RunnerService interface {
 	Start(context.Context, RunnerStartRequest) (*RunnerStartResponse, error)
 	// StartStage sets a stage to Active
 	StartStage(context.Context, StageRequest) (*StageResponse, error)
+	UploadFile(context.Context, UploadFileRequest) (*UploadFileResponse, error)
 }
 
 // ServerService handles all the servers
@@ -163,6 +164,7 @@ func RegisterRunnerService(server *otohttp.Server, runnerService RunnerService) 
 	server.Register("RunnerService", "Script", handler.handleScript)
 	server.Register("RunnerService", "Start", handler.handleStart)
 	server.Register("RunnerService", "StartStage", handler.handleStartStage)
+	server.Register("RunnerService", "UploadFile", handler.handleUploadFile)
 }
 
 func (s *runnerServiceServer) handleApply(w http.ResponseWriter, r *http.Request) {
@@ -442,6 +444,24 @@ func (s *runnerServiceServer) handleStartStage(w http.ResponseWriter, r *http.Re
 		return
 	}
 	response, err := s.runnerService.StartStage(r.Context(), request)
+	if err != nil {
+		log.Println("TODO: oto service error:", err)
+		s.server.OnErr(w, r, err)
+		return
+	}
+	if err := otohttp.Encode(w, r, http.StatusOK, response); err != nil {
+		s.server.OnErr(w, r, err)
+		return
+	}
+}
+
+func (s *runnerServiceServer) handleUploadFile(w http.ResponseWriter, r *http.Request) {
+	var request UploadFileRequest
+	if err := otohttp.Decode(r, &request); err != nil {
+		s.server.OnErr(w, r, err)
+		return
+	}
+	response, err := s.runnerService.UploadFile(r.Context(), request)
 	if err != nil {
 		log.Println("TODO: oto service error:", err)
 		s.server.OnErr(w, r, err)
@@ -838,6 +858,7 @@ type Runner struct {
 	Stages []*Stage `json:"stages" yaml:"stages"`
 	// Switches to use for nuix-console
 	Switches []*NuixSwitch `json:"switches" yaml:"switches"`
+	CaseID   string        `json:"caseID" yaml:"caseID"`
 }
 
 // RunnerApplyRequest is the input-object for applying a runner-configuration to
@@ -989,10 +1010,23 @@ type StageResponse struct {
 type RunnerStartRequest struct {
 	ID     uint   `json:"id" yaml:"id"`
 	Runner string `json:"runner" yaml:"runner"`
+	CaseID string `json:"caseID" yaml:"caseID"`
 }
 
 // RunnerStartResponse is the output-object for starting a runner by id
 type RunnerStartResponse struct {
+	// Error is string explaining what went wrong. Empty if everything was fine.
+	Error string `json:"error,omitempty" yaml:"error,omitempty"`
+}
+
+type UploadFileRequest struct {
+	Name        string `json:"name" yaml:"name"`
+	Description string `json:"description" yaml:"description"`
+	Content     []byte `json:"content" yaml:"content"`
+}
+
+type UploadFileResponse struct {
+	Path string `json:"path" yaml:"path"`
 	// Error is string explaining what went wrong. Empty if everything was fine.
 	Error string `json:"error,omitempty" yaml:"error,omitempty"`
 }

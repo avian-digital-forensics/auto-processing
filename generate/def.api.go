@@ -249,6 +249,8 @@ type RunnerService interface {
 
 	// Script returns the script for the runner
 	Script(RunnerGetRequest) RunnerScriptResponse
+
+	UploadFile(UploadFileRequest) UploadFileResponse
 }
 
 // Runner holds the information for a specific runner
@@ -292,6 +294,8 @@ type Runner struct {
 
 	// Switches to use for nuix-console
 	Switches []*NuixSwitch
+
+	CaseID string
 }
 
 // RunnerApplyRequest is the input-object for
@@ -390,6 +394,7 @@ type RunnerScriptResponse struct {
 type RunnerStartRequest struct {
 	ID     uint
 	Runner string
+	CaseID string
 }
 
 // RunnerStartResponse is the output-object
@@ -774,4 +779,14 @@ type ScanNewChildItems struct {
 
 	// Status for the stage
 	Status int64
+}
+
+type UploadFileRequest struct {
+	Name        string
+	Description string
+	Content     []byte
+}
+
+type UploadFileResponse struct {
+	Path string
 }

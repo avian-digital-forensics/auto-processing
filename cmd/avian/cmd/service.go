@@ -20,6 +20,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/avian-digital-forensics/auto-processing/cmd/avian/cmd/heartbeat"
@@ -58,12 +59,13 @@ with the backend and the running Nuix-scripts.`,
 
 // variables from flags
 var (
-	address string // Address for http to listen on
-	port    string // Port for http to listen on
-	debug   bool   // To debug the service
-	dbName  string // name for the SQLite-db
-	logPath string // path for the log-files
-	verbose bool   // Used to log to the console
+	address  string // Address for http to listen on
+	port     string // Port for http to listen on
+	debug    bool   // To debug the service
+	dbName   string // name for the SQLite-db
+	logPath  string // path for the log-files
+	verbose  bool   // Used to log to the console
+	dataPath string // path for data
 )
 
 // loggers
@@ -75,11 +77,17 @@ var (
 func init() {
 	rootCmd.AddCommand(serviceCmd)
 
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	serviceCmd.Flags().StringVar(&address, "address", "0.0.0.0", "address to listen on")
 	serviceCmd.Flags().StringVar(&port, "port", "8080", "port for HTTP to listen on")
 	serviceCmd.Flags().BoolVar(&debug, "debug", false, "for debugging")
 	serviceCmd.Flags().StringVar(&dbName, "db", "avian.db", "path to sqlite database")
 	serviceCmd.Flags().StringVar(&logPath, "log-path", "./log/", "path to log-files")
+	serviceCmd.Flags().StringVar(&dataPath, "data-path", wd, "path to raw-data")
 	serviceCmd.Flags().BoolVar(&verbose, "verbose", false, "for logging to the console")
 }
 
@@ -94,6 +102,19 @@ func run() error {
 
 	if err := setLoggers(); err != nil {
 		return fmt.Errorf("failed to set lumberjack-loggers : %v", err)
+	}
+
+	if strings.HasPrefix(dataPath, ".") {
+		return fmt.Errorf("specify full path for data-path")
+	}
+
+	logPath = fixPath(logPath)
+	dataPath = fixPath(dataPath)
+
+	if _, err := os.Stat(dataPath); os.IsNotExist(err) {
+		if err := os.Mkdir(dataPath, os.ModePerm); err != nil {
+			return fmt.Errorf("failed to create dataPath: %v", dataPath)
+		}
 	}
 
 	core := zapcore.NewCore(
@@ -127,6 +148,7 @@ func run() error {
 	}()
 
 	// Set the server-address for HTTP
+	address = os.Getenv("AVIAN_ADDRESS")
 	if os.Getenv("AVIAN_ADDRESS") == "" {
 		ip, err := utils.GetIPAddress()
 		if err != nil {
@@ -189,7 +211,7 @@ func run() error {
 
 	// Register our services
 	logger.Debug("Registering our oto http-services")
-	runnersvc := services.NewRunnerService(db, shell, logger, logHandler)
+	runnersvc := services.NewRunnerService(db, shell, logger, logHandler, dataPath)
 	api.RegisterRunnerService(server, runnersvc)
 	api.RegisterServerService(server, services.NewServerService(db, shell, logger))
 	api.RegisterNmsService(server, services.NewNmsService(db, logger))
@@ -300,4 +322,16 @@ func isAdmin() (bool, error) {
 		return false, fmt.Errorf("Token Membership Error: %s", err)
 	}
 	return member, nil
+}
+
+func fixPath(path string) string {
+	if strings.HasSuffix(path, "/") || strings.HasSuffix(path, "\\") {
+		return path
+	}
+
+	if strings.Contains(path, ":\\") {
+		return path + "\\"
+	}
+
+	return path + "/"
 }

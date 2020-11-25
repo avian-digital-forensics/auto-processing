@@ -34,8 +34,8 @@ def send_request(method, body)
 end
 
 # Set runner to running
-def start_runner
-  send_request('Start', {runner: '<%= runner.Name %>', id: <%= runner.ID %>})
+def start_runner(caseID)
+  send_request('Start', {runner: '<%= runner.Name %>', id: <%= runner.ID %>, caseID: caseID})
 end
 
 # Set runner to failed
@@ -154,9 +154,6 @@ Thread.new {
   end
 }
 
-# start the runner
-start_runner
-
 @case_factory = $utilities.getCaseFactory
 
 def open_case(settings)
@@ -247,6 +244,10 @@ single_case = open_case({
     'index.number_of_replicas' => <%= runner.CaseSettings.Case.ElasticSearch.IndexNumberOfReplicas %>.to_i,
   },<% } %>
 })
+
+# start the runner
+start_runner(single_case.guid.tr('-', ''))
+
 <%= if (process(runner)) { %><%= if (!getProcessingFailed(runner)) { %>
 # Create or open the compound-case
 log_info('', 0, 'Opening compound-case: <%= runner.CaseSettings.CompoundCase.Name %>')

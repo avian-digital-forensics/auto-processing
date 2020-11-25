@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/avian-digital-forensics/auto-processing/generate/ruby"
@@ -21,14 +22,16 @@ type RunnerService struct {
 	shell      pwsh.Powershell
 	logger     *zap.Logger
 	logHandler logging.Service
+	dataPath   string
 }
 
-func NewRunnerService(db *gorm.DB, shell pwsh.Powershell, logger *zap.Logger, logHandler logging.Service) RunnerService {
+func NewRunnerService(db *gorm.DB, shell pwsh.Powershell, logger *zap.Logger, logHandler logging.Service, dataPath string) RunnerService {
 	return RunnerService{
 		DB:         db,
 		shell:      shell,
 		logger:     logger,
 		logHandler: logHandler,
+		dataPath:   dataPath,
 	}
 }
 
@@ -331,6 +334,7 @@ func (s RunnerService) Start(ctx context.Context, r api.RunnerStartRequest) (*ap
 	now := time.Now()
 	runner.Status = avian.StatusRunning
 	runner.HealthyAt = &now
+	runner.CaseID = r.CaseID
 	if err := s.DB.Save(&runner).Error; err != nil {
 		logger.Error("Cannot save the started runner", zap.String("exception", err.Error()))
 		return nil, fmt.Errorf("cannot save runner: %v", err)
@@ -733,4 +737,21 @@ func (s RunnerService) Script(ctx context.Context, r api.RunnerGetRequest) (*api
 		return nil, err
 	}
 	return &api.RunnerScriptResponse{Script: script}, nil
+}
+
+func (s RunnerService) UploadFile(ctx context.Context, r api.UploadFileRequest) (*api.UploadFileResponse, error) {
+	path := s.dataPath + r.Name
+
+	file, err := os.Create(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	if _, err := file.Write(r.Content); err != nil {
+		os.Remove(path)
+		return nil, err
+	}
+
+	return &api.UploadFileResponse{Path: path}, nil
 }

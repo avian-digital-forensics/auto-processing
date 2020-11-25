@@ -1113,6 +1113,60 @@ func (s *RunnerService) StartStage(ctx context.Context, r StageRequest) (*StageR
 	return &response.StageResponse, nil
 }
 
+func (s *RunnerService) UploadFile(ctx context.Context, r UploadFileRequest) (*UploadFileResponse, error) {
+	requestBodyBytes, err := json.Marshal(r)
+	if err != nil {
+		return nil, errors.Wrap(err, "RunnerService.UploadFile: marshal UploadFileRequest")
+	}
+	signature, err := generateSignature(requestBodyBytes, s.client.secret)
+	if err != nil {
+		return nil, errors.Wrap(err, "RunnerService.UploadFile: generate signature UploadFileRequest")
+	}
+	url := s.client.RemoteHost + "RunnerService.UploadFile"
+	s.client.Debug(fmt.Sprintf("POST %s", url))
+	s.client.Debug(fmt.Sprintf(">> %s", string(requestBodyBytes)))
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(requestBodyBytes))
+	if err != nil {
+		return nil, errors.Wrap(err, "RunnerService.UploadFile: NewRequest")
+	}
+	req.Header.Set("X-API-SIGNATURE", signature)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept-Encoding", "gzip")
+	req = req.WithContext(ctx)
+	resp, err := s.client.HTTPClient.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "RunnerService.UploadFile")
+	}
+	defer resp.Body.Close()
+	var response struct {
+		UploadFileResponse
+		Error string
+	}
+	var bodyReader io.Reader = resp.Body
+	if strings.Contains(resp.Header.Get("Content-Encoding"), "gzip") {
+		decodedBody, err := gzip.NewReader(resp.Body)
+		if err != nil {
+			return nil, errors.Wrap(err, "RunnerService.UploadFile: new gzip reader")
+		}
+		defer decodedBody.Close()
+		bodyReader = decodedBody
+	}
+	respBodyBytes, err := ioutil.ReadAll(bodyReader)
+	if err != nil {
+		return nil, errors.Wrap(err, "RunnerService.UploadFile: read response body")
+	}
+	if err := json.Unmarshal(respBodyBytes, &response); err != nil {
+		if resp.StatusCode != http.StatusOK {
+			return nil, errors.Errorf("RunnerService.UploadFile: (%d) %v", resp.StatusCode, string(respBodyBytes))
+		}
+		return nil, err
+	}
+	if response.Error != "" {
+		return nil, errors.New(response.Error)
+	}
+	return &response.UploadFileResponse, nil
+}
+
 // ServerService handles all the servers
 type ServerService struct {
 	client *Client
@@ -1645,6 +1699,8 @@ type Runner struct {
 
 	// Switches to use for nuix-console
 	Switches []*NuixSwitch `json:"switches" yaml:"switches"`
+
+	CaseID string `json:"caseID" yaml:"caseID"`
 }
 
 // RunnerApplyRequest is the input-object for applying a runner-configuration to
@@ -1810,10 +1866,24 @@ type RunnerStartRequest struct {
 	ID uint `json:"id" yaml:"id"`
 
 	Runner string `json:"runner" yaml:"runner"`
+
+	CaseID string `json:"caseID" yaml:"caseID"`
 }
 
 // RunnerStartResponse is the output-object for starting a runner by id
 type RunnerStartResponse struct {
+}
+
+type UploadFileRequest struct {
+	Name string `json:"name" yaml:"name"`
+
+	Description string `json:"description" yaml:"description"`
+
+	Content []byte `json:"content" yaml:"content"`
+}
+
+type UploadFileResponse struct {
+	Path string `json:"path" yaml:"path"`
 }
 
 type ScanNewChildItems struct {
