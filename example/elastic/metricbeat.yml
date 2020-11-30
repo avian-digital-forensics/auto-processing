@@ -1,4 +1,3 @@
-
 metricbeat.config.modules:
   
   path: ${path.config}/modules.d/*.yml
@@ -6,7 +5,7 @@ metricbeat.config.modules:
   
   reload.enabled: true
 
- 
+logging.metrics.period: 5s    
 
 setup.template.settings:
   index.number_of_shards: 1
@@ -53,8 +52,60 @@ processors:
                 system.filesystem.type: "fixed"
             - contains:
                 system.filesystem.type: "removable"         
-     tags: [DISK-SPACE-UTIL]  
+     tags: [DISK-SPACE-UTIL]
 
+  - add_tags: 
+     when:
+        or:
+            - contains:
+                windows.perfmon.disk: "PhysicalDisk"
+            - contains:
+                windows.perfmon.disk: "removable"         
+     tags: [PERFMON-DISK-IO]
+       
+  - add_fields:
+     when:
+      contains:
+         windows.perfmon.instance: "0"         
+     fields:
+         windows_perfmon_disk_id: "Physicaldisk 0"
+         
+  - add_fields:
+     when:
+      contains:
+         windows.perfmon.instance: "1"         
+     fields:
+         windows_perfmon_disk_id: "Physicaldisk 1"
+  
+  - add_fields:
+     when:
+      contains:
+         windows.perfmon.instance: "2"         
+     fields:
+         windows_perfmon_disk_id: "Physicaldisk 2"
+         
+  - add_fields:
+     when:
+      contains:
+         windows.perfmon.instance: "3"         
+     fields:
+         windows_perfmon_disk_id: "Physicaldisk 3"      
+  
+  - add_fields:
+     when:
+      contains:
+         windows.perfmon.instance: "4"         
+     fields:
+         windows_perfmon_disk_id: "Physicaldisk 4"
+   
+#  - add_fields:
+#     when:
+#      contains:
+#         windows.perfmon.instance: "_Total"         
+#     fields:
+#         windows_perfmon_disk_id: "Physicaldisk Total"
+
+         
   - add_tags: 
      when:
        contains:

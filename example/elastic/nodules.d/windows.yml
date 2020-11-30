@@ -1,0 +1,36 @@
+- module: windows
+  metricsets: [perfmon]
+  period: 5s
+  perfmon.ignore_non_existent_counters: true
+  perfmon.group_measurements_by_instance: true
+  perfmon.queries:  
+############################ DISK
+  - object: "PhysicalDisk"
+    field : "disk"
+    instance: "*"
+    counters:
+    - name: "Disk Writes/sec"
+    - name: "% Disk Write Time"
+      field: "write_time"
+      format: "float"   
+    - name: "Current Disk Queue Length"
+      field: "cu_disk_q_l"  
+    - name: "Avg. Disk Read Queue Length"
+      field: "avg_disk_read_l"
+    - name: "Avg. Disk Write Queue Length"
+      field: "avg_disk_write_l"      
+    - name: "% Disk Time"
+      field: "percent_disk_time"
+    - name: "Disk Read Bytes/sec"
+      field: "disk_read_bytes_sec"
+    - name: "Disk Write Bytes/sec"
+      field: "disk_write_bytes_sec"  
+################################# Memory
+
+#  - object: "Memory"
+#    field : "memory"     
+#    -name: "Avaiable Mbytes"
+#     field "avaiable_mbytes"
+#     
+        
+         
