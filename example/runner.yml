@@ -28,6 +28,13 @@ api:
       case:
         description: info
         investigator: simon
+        # Elasticsearch-configuration example
+        #elasticSettings:
+        #  clusterName: docker-cluster
+        #  hosts:
+        #    - elasticsearch:9300
+        #  numberOfShards: 1
+        #  numberOfReplicas: 1
 
       # Add information for the compound case
       compoundCase:

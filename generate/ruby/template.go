@@ -245,10 +245,13 @@ single_case = open_case({
   },<% } %>
 })
 
+compound_case = nil
+review_compound = nil
+
 # start the runner
 start_runner(single_case.guid.tr('-', ''))
 
-<%= if (process(runner)) { %><%= if (!getProcessingFailed(runner)) { %>
+<%= if (process(runner)) { %><%= if ((!getProcessingFailed(runner)) && (!elasticSearch(runner))) { %>
 # Create or open the compound-case
 log_info('', 0, 'Opening compound-case: <%= runner.CaseSettings.CompoundCase.Name %>')
 compound_case = open_case({ 
