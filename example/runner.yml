@@ -29,12 +29,11 @@ api:
         description: info
         investigator: simon
         # Elasticsearch-configuration example
-        #elasticSettings:
-        #  clusterName: docker-cluster
-        #  hosts:
-        #    - elasticsearch:9300
-        #  numberOfShards: 1
-        #  numberOfReplicas: 1
+        # elasticSearch:
+        #   clusterName: aviane68
+        #   nuixTransportHost: aviane68.avian.dk:9300
+        #   indexNumberOfReplicas: 1
+        #   indexNumberOfShards: 1
 
       # Add information for the compound case
       compoundCase:
