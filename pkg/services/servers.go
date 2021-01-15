@@ -11,16 +11,20 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
+// ServerService holds the dependencies
+// for the ServerService
 type ServerService struct {
 	db     *gorm.DB
 	shell  pwsh.Powershell
 	logger *zap.Logger
 }
 
+// NewServerService creates a new server-service
 func NewServerService(db *gorm.DB, shell pwsh.Powershell, logger *zap.Logger) ServerService {
 	return ServerService{db: db, shell: shell, logger: logger}
 }
 
+// Apply applies the servers to the db
 func (s ServerService) Apply(ctx context.Context, r api.ServerApplyRequest) (*api.ServerApplyResponse, error) {
 	logger := s.logger.With(
 		zap.String("server", r.Hostname),
@@ -112,6 +116,7 @@ func (s ServerService) Apply(ctx context.Context, r api.ServerApplyRequest) (*ap
 	return &api.ServerApplyResponse{}, nil
 }
 
+// List the servers from the db
 func (s ServerService) List(ctx context.Context, r api.ServerListRequest) (*api.ServerListResponse, error) {
 	s.logger.Debug("Getting Servers-list")
 	var servers []api.Server

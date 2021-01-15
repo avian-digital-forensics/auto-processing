@@ -29,6 +29,8 @@ import (
 )
 
 // serversCmd represents the servers command
+//
+// "avian servers"
 var serversCmd = &cobra.Command{
 	Use:   "servers",
 	Short: "Servers for remote-connections",
@@ -39,6 +41,8 @@ list servers from the backend to see availability`,
 }
 
 // serversApplyCmd represents the apply servers command
+//
+// "avian servers apply <server.yml>"
 var serversApplyCmd = &cobra.Command{
 	Use:   "apply",
 	Short: "Apply new servers for remote-connections with specified config",
@@ -54,6 +58,8 @@ var serversApplyCmd = &cobra.Command{
 }
 
 // serversListCmd represents the list servers command
+//
+// "avian servers list"
 var serversListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List servers available for remote-connection",
@@ -64,9 +70,12 @@ var serversListCmd = &cobra.Command{
 	},
 }
 
+// srvService is needed by all server-commands
+// to be able to speak to the API
 var srvService *avian.ServerService
 
 func init() {
+	// Get the address for the API (where the avian service is listening at)
 	address := os.Getenv("AVIAN_ADDRESS")
 	if address == "" {
 		ip, err := utils.GetIPAddress()
@@ -77,25 +86,35 @@ func init() {
 		address = ip
 	}
 
+	// Get the port for the API (where the avian service is listening at)
 	port := os.Getenv("AVIAN_PORT")
 	if port == "" {
 		port = "8080"
 	}
+
+	// create the uri for the service
 	url := fmt.Sprintf("http://%s:%s/oto/", address, port)
 
-	srvService = avian.NewServerService(avian.New(url, "hej"))
+	// Set the client for the server-service
+	// pass the uri and an empty token (since no token is needed)
+	srvService = avian.NewServerService(avian.New(url, ""))
 
+	// Add the commands to the correct hierarchy
 	rootCmd.AddCommand(serversCmd)
 	serversCmd.AddCommand(serversApplyCmd)
 	serversCmd.AddCommand(serversListCmd)
 }
 
+// applyServers will apply the servers from the config-file
+// to the service
 func applyServers(ctx context.Context, path string) error {
+	// get the config with the servers info
 	cfg, err := configs.Get(path)
 	if err != nil {
 		return fmt.Errorf("Couldn't parse yml-file %s : %v", path, err)
 	}
 
+	// output that the service is testing connections to the applied servers
 	fmt.Fprintf(os.Stdout, "INFO : Testing connection to servers\nPlease wait...\n")
 
 	var count int
@@ -105,19 +124,22 @@ func applyServers(ctx context.Context, path string) error {
 			return err
 		}
 		fmt.Fprintf(os.Stdout, "server: %s has been applied\n", srv.Server.Hostname)
-		count += 1
+		count++
 	}
 
 	fmt.Fprintf(os.Stdout, "applied %d servers to backend", count)
 	return nil
 }
 
+// listServers lists all the servers
+// that has been applied to the backend
 func listServers(ctx context.Context) error {
 	resp, err := srvService.List(ctx, avian.ServerListRequest{})
 	if err != nil {
 		return err
 	}
 
+	// format the response
 	var headers table.Row
 	var body []table.Row
 	headers = table.Row{"ID", "Hostname", "Port", "OS", "Nuix-Path", "Status"}

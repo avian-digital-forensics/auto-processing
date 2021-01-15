@@ -23,10 +23,21 @@ const (
 	sleepMinutes = 2
 )
 
+// Queue hold the dependencies
+// for the queue
 type Queue struct {
-	db     *gorm.DB
-	shell  pwsh.Powershell
-	uri    string
+	// db to get and update information
+	db *gorm.DB
+
+	// shell for remote connections
+	shell pwsh.Powershell
+
+	// uri for the service to speak to
+	// for the scripts that the queue
+	// will generate
+	uri string
+
+	// logger for the service
 	logger *zap.Logger
 }
 
@@ -35,6 +46,7 @@ func New(db *gorm.DB, shell pwsh.Powershell, uri string, logger *zap.Logger) Que
 	return Queue{db: db, shell: shell, uri: uri, logger: logger}
 }
 
+// Start the queue
 func (q *Queue) Start() {
 	q.logger.Info("Queue started")
 	for {
@@ -43,6 +55,8 @@ func (q *Queue) Start() {
 	}
 }
 
+// loop will get all the relevant runners
+// and iterate over them, and try to run each
 func (q *Queue) loop() {
 	q.logger.Debug("Getting runners from queue")
 	runners, err := getRunners(q.db)
@@ -52,6 +66,7 @@ func (q *Queue) loop() {
 	}
 	q.logger.Debug("Found runners from Queue", zap.Int("amount", len(runners)))
 
+	// loop over the runners
 	for _, runner := range runners {
 		q.logger.Debug("Trying to start runner", zap.String("runner", runner.Name))
 
@@ -63,14 +78,20 @@ func (q *Queue) loop() {
 			continue
 		}
 
+		// Check if the runner has an inApp-stage
 		for _, s := range runner.Stages {
 			if s.InApp != nil {
+				// Decode the settings for the inApp-stage
 				var settings inapp.Settings
 				if err := inapp.Config(s.InApp.Config, &settings); err != nil {
 					q.logger.Error("Failed to decode inapp config", zap.String("exception", err.Error()))
+					// FIXME: currently just logging the error - maybe we should return the error(?)
 					continue
 				}
+				// Set the directory to the settings for where the inApp-scripts are located
 				settings.MainDirectory = utils.RemoteScriptDir(server.NuixPath, server.AvianScripts)
+
+				// set the settings to the inApp-stage
 				s.InApp.Settings = settings
 			}
 		}
@@ -106,6 +127,8 @@ func (q *Queue) loop() {
 	}
 }
 
+// run holds the dependencies
+// for a specific run
 type run struct {
 	queue   *Queue
 	runner  *api.Runner
@@ -114,6 +137,7 @@ type run struct {
 	session pwsh.Session
 }
 
+// newRun creates a new run
 func (q *Queue) newRun(runner *api.Runner, server *api.Server, nms *api.Nms) *run {
 	return &run{
 		queue:  q,
@@ -123,6 +147,7 @@ func (q *Queue) newRun(runner *api.Runner, server *api.Server, nms *api.Nms) *ru
 	}
 }
 
+// setActive will set the runs dependencies to active
 func (r *run) setActive() error {
 	db := r.queue.db
 
@@ -143,7 +168,8 @@ func (r *run) setActive() error {
 	r.nms.InUse = r.runner.Workers
 	for _, lic := range r.nms.Licences {
 		if lic.Type == r.runner.Licence {
-			lic.InUse += 1
+			// FIXME: this doesnt work accordingly
+			lic.InUse++
 			if err := db.Save(&lic).Error; err != nil {
 				return fmt.Errorf("Failed to update licence: %s %s : %v", r.nms.Address, lic.Type, err)
 			}
@@ -158,6 +184,7 @@ func (r *run) setActive() error {
 	return nil
 }
 
+// start the run
 func (r *run) start() error {
 	logger := r.queue.logger.With(
 		zap.String("runner", r.runner.Name),
@@ -202,11 +229,15 @@ func (r *run) start() error {
 		return fmt.Errorf("unable to set NUIX_PASSWORD env-variable: %v", err)
 	}
 
+	// check if the runner has
+	// an inApp-script
 	if r.runner.HasInApp() {
+		// check that avianScripts has been specified
 		if len(r.server.AvianScripts) == 0 {
 			logger.Error("Cannot perform in-app scripts - avianScripts directory is not configured for server")
 			return fmt.Errorf("Cannot perform in-app scripts - avianScripts directory is not configured for server")
 		}
+		// copy avian scripts from service to the remote machine
 		logger.Info("Copying avian-scripts directory to session", zap.String("src", r.server.AvianScripts), zap.String("dst", r.server.NuixPath))
 		if err := session.CopyItemFromHost(r.server.AvianScripts, r.server.NuixPath); err != nil {
 			logger.Error("Failed to copy avian-scripts directory to session",
@@ -218,6 +249,7 @@ func (r *run) start() error {
 		}
 	}
 
+	// Write the generated script to the remote machine
 	scriptName := r.runner.Name + ".gen.rb"
 	logger.Info("Creating runner-script to server", zap.String("script", scriptName))
 	if err := session.CreateFile(r.server.NuixPath, scriptName, []byte(script)); err != nil {
@@ -248,8 +280,10 @@ func (r *run) start() error {
 		args = append(args, fmt.Sprintf("%s", sw.Value))
 	}
 
+	// set the generated scripts name in the end of the args
 	args = append(args, scriptName)
 
+	// set the powershell-sessions location to the nuix-path
 	if err := session.SetLocation(r.server.NuixPath); err != nil {
 		logger.Error("Failed to set location", zap.String("exception", err.Error()))
 		return fmt.Errorf("Failed to set location: %v", err)
@@ -258,6 +292,8 @@ func (r *run) start() error {
 	return session.Run("nuix_console.exe", args...)
 }
 
+// handle the error will not return an error
+// just log the error
 func (r *run) handle(err error) {
 	logger := r.queue.logger.With(
 		zap.String("runner", r.runner.Name),
@@ -278,7 +314,7 @@ func (r *run) handle(err error) {
 		}
 		url := fmt.Sprintf("http://%s:%s/oto/", "localhost", port)
 
-		runnerService := avian.NewRunnerService(avian.New(url, "hej"))
+		runnerService := avian.NewRunnerService(avian.New(url, ""))
 		runnerService.Failed(
 			context.Background(),
 			avian.RunnerFailedRequest{
@@ -293,6 +329,7 @@ func (r *run) handle(err error) {
 	return
 }
 
+// close the runner
 func (r *run) close() error {
 	if r == nil {
 		return errors.New("run is already closed")
@@ -307,6 +344,7 @@ func (r *run) close() error {
 	return nil
 }
 
+// getRunners from the database
 func getRunners(db *gorm.DB) ([]*api.Runner, error) {
 	var runners []*api.Runner
 	err := db.
@@ -328,6 +366,7 @@ func getRunners(db *gorm.DB) ([]*api.Runner, error) {
 	return runners, err
 }
 
+// getRunnerByName
 func getRunnerByName(db *gorm.DB, name string) (*api.Runner, error) {
 	var runner api.Runner
 	err := db.Preload("Stages.Process.EvidenceStore").
@@ -371,6 +410,7 @@ func activeLicence(db *gorm.DB, address, licencetype string, workers int64) (*ap
 	return nil, fmt.Errorf("did not find licencetype: %s", licencetype)
 }
 
+// nuixError was used to handle errors from nuix (not used since v13)
 func nuixError(err error) error {
 	if !strings.Contains(err.Error(), "Caused by:") {
 		return err

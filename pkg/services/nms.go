@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -13,15 +14,19 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
+// NmsService holds dependencies
+// for the NmsService
 type NmsService struct {
 	db     *gorm.DB
 	logger *zap.Logger
 }
 
+// NewNmsService creates a new NmsService
 func NewNmsService(db *gorm.DB, logger *zap.Logger) NmsService {
 	return NmsService{db: db, logger: logger}
 }
 
+// Apply applies the nms-servers to the database
 func (s NmsService) Apply(ctx context.Context, r api.NmsApplyRequests) (*api.NmsApplyResponse, error) {
 	// Start transaction to fall back
 	// if we get an error
@@ -110,6 +115,8 @@ func (s NmsService) Apply(ctx context.Context, r api.NmsApplyRequests) (*api.Nms
 	s.logger.Debug("Commit successful")
 	return &resp, nil
 }
+
+// List lists the NMS-servers from the database
 func (s NmsService) List(ctx context.Context, r api.NmsListRequest) (*api.NmsListResponse, error) {
 	s.logger.Debug("Getting NMS-list")
 	var nms []api.Nms
@@ -121,6 +128,7 @@ func (s NmsService) List(ctx context.Context, r api.NmsListRequest) (*api.NmsLis
 	return &api.NmsListResponse{Nms: nms}, nil
 }
 
+// ListLicences lists licences for the specified NMS-server
 func (s NmsService) ListLicences(ctx context.Context, r api.NmsListLicencesRequest) (*api.NmsListLicencesResponse, error) {
-	return nil, nil
+	return nil, errors.New("not implemented")
 }

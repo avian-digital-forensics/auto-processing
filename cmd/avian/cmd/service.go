@@ -30,7 +30,6 @@ import (
 	"github.com/avian-digital-forensics/auto-processing/pkg/logging"
 	"github.com/avian-digital-forensics/auto-processing/pkg/pwsh"
 	"github.com/avian-digital-forensics/auto-processing/pkg/services"
-	"github.com/avian-digital-forensics/auto-processing/pkg/utils"
 	"github.com/gorilla/handlers"
 	"github.com/natefinch/lumberjack"
 	"go.uber.org/zap"
@@ -45,6 +44,9 @@ import (
 )
 
 // serviceCmd represents the service command
+//
+// this will be executed when the user runs
+// "avian service"
 var serviceCmd = &cobra.Command{
 	Use:   "service",
 	Short: "HTTP-service for the queuing component",
@@ -75,13 +77,17 @@ var (
 )
 
 func init() {
+	// add the service command to the root
+	// (so it will be executable)
 	rootCmd.AddCommand(serviceCmd)
 
+	// get the working directory
 	wd, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// parse the flags (cli args)
 	serviceCmd.Flags().StringVar(&address, "address", "0.0.0.0", "address to listen on")
 	serviceCmd.Flags().StringVar(&port, "port", "8080", "port for HTTP to listen on")
 	serviceCmd.Flags().BoolVar(&debug, "debug", false, "for debugging")
@@ -100,6 +106,7 @@ func run() error {
 		return fmt.Errorf("service must run as admin")
 	}
 
+	// set loggers to the service
 	if err := setLoggers(); err != nil {
 		return fmt.Errorf("failed to set lumberjack-loggers : %v", err)
 	}
@@ -108,21 +115,26 @@ func run() error {
 		return fmt.Errorf("specify full path for data-path")
 	}
 
+	// fix paths from flags
 	logPath = fixPath(logPath)
 	dataPath = fixPath(dataPath)
 
+	// make sure dataPath exists
 	if _, err := os.Stat(dataPath); os.IsNotExist(err) {
 		if err := os.Mkdir(dataPath, os.ModePerm); err != nil {
 			return fmt.Errorf("failed to create dataPath: %v", dataPath)
 		}
 	}
 
+	// create a core for the zap-logger
 	core := zapcore.NewCore(
 		zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()),
 		zapcore.AddSync(serviceLogger),
 		zap.DebugLevel,
 	)
 
+	// if the verbose-flag is used
+	// set consoleConfig to the core
 	if verbose {
 		consoleConfig := zap.NewProductionEncoderConfig()
 		consoleConfig.EncodeTime = zapcore.ISO8601TimeEncoder
@@ -133,13 +145,16 @@ func run() error {
 		))
 	}
 
+	// Create the zap-logger with the core
 	logger := zap.New(core, zap.Option(zap.WithCaller(debug)))
 	defer logger.Sync()
 
 	logger.Debug("Starting service", zap.Bool("debug", debug), zap.String("db", dbName), zap.String("log-path", logPath))
 
+	// Create a log-handler
 	logHandler := logging.New(logPath)
 	go func() {
+		// Clean the unused logs every hour
 		cleanAt := time.Hour * 1
 		for {
 			time.Sleep(cleanAt)
@@ -148,24 +163,16 @@ func run() error {
 	}()
 
 	// Set the server-address for HTTP
-	address = os.Getenv("AVIAN_ADDRESS")
-	if os.Getenv("AVIAN_ADDRESS") == "" {
-		ip, err := utils.GetIPAddress()
-		if err != nil {
-			return fmt.Errorf("Cannot get ip-address: %v", err)
-		}
-		logger.Warn("No environment-variable found for: AVIAN_ADDRESS - using default", zap.String("default", address))
-		address = ip
-	} else {
+	if os.Getenv("AVIAN_ADDRESS") != "" {
 		address = os.Getenv("AVIAN_ADDRESS")
 	}
 
 	// Set the server-port for HTTP
-	if os.Getenv("AVIAN_PORT") == "" {
-		logger.Warn("No environment-variable found for: AVIAN_PORT - using default", zap.String("default", port))
-	} else {
+	if os.Getenv("AVIAN_PORT") != "" {
 		port = os.Getenv("AVIAN_PORT")
 	}
+
+	serviceURI := fmt.Sprintf("http://%s:%s/oto/", address, port)
 
 	// Connect to the database
 	logger.Info("Connecting to database")
@@ -196,11 +203,11 @@ func run() error {
 		return fmt.Errorf("unable to create powershell-process : %v", err)
 	}
 
-	// start the queue
+	// start the queue (queue handles when the runners should start)
 	logger.Info("Starting queue-service")
 	queue := queue.New(db,
 		shell,
-		fmt.Sprintf("http://%s:%s/oto/", address, port),
+		serviceURI,
 		logger,
 	)
 	go queue.Start()
@@ -211,7 +218,7 @@ func run() error {
 
 	// Register our services
 	logger.Debug("Registering our oto http-services")
-	runnersvc := services.NewRunnerService(db, shell, logger, logHandler, dataPath)
+	runnersvc := services.NewRunnerService(db, shell, logger, logHandler, serviceURI, dataPath)
 	api.RegisterRunnerService(server, runnersvc)
 	api.RegisterServerService(server, services.NewServerService(db, shell, logger))
 	api.RegisterNmsService(server, services.NewNmsService(db, logger))

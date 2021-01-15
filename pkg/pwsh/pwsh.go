@@ -47,11 +47,13 @@ type session struct {
 	hostname string
 }
 
+// NewSession creates a new remote session to the specified host with username and password
 func (s service) NewSession(host, username, password string) (Session, error) {
 	sess, err := s.shell.NewSession(host, powershell.WithUsernamePassword(username, password))
 	return session{sess, s.shell, host}, err
 }
 
+// NewSession creates a new CredSSP remote session to the specified host with username and password
 func (s service) NewSessionCredSSP(host, username, password string) (Session, error) {
 	sess, err := s.shell.NewSession(host,
 		powershell.WithUsernamePassword(username, password),
@@ -68,6 +70,7 @@ func (s session) CopyItemFromHost(src, dst string) error {
 	return err
 }
 
+// CheckPath checks if the specified path exists
 func (s session) CheckPath(path string) error {
 	stdout, err := s.session.Execute(fmt.Sprintf("Test-Path -Path '%s'", path))
 	if strings.HasPrefix(string(stdout), "False") {
@@ -76,10 +79,12 @@ func (s session) CheckPath(path string) error {
 	return err
 }
 
+// Close the session
 func (s session) Close() error {
 	return s.session.Close()
 }
 
+// Create a file to the session
 func (s session) CreateFile(path, name string, data []byte) error {
 	file, err := ioutil.TempFile(".", name)
 	if err != nil {
@@ -103,6 +108,7 @@ func (s session) CreateFile(path, name string, data []byte) error {
 	return s.CopyItemFromHost(fmt.Sprintf("%s\\%s", wd, file.Name()), fmt.Sprintf("%s\\%s", path, name))
 }
 
+// Echo an argument
 func (s session) Echo(arg string) (string, error) {
 	stdout, err := s.session.Execute(fmt.Sprintf("echo %s", arg))
 	if err != nil {
@@ -111,11 +117,13 @@ func (s session) Echo(arg string) (string, error) {
 	return string(stdout), nil
 }
 
+// Remove item from the session
 func (s session) RemoveItem(path string) error {
 	_, err := s.session.Execute(fmt.Sprintf("Remove-Item -Path '%s' -Force -Recurse", path))
 	return err
 }
 
+// Run a program in the session
 func (s session) Run(program string, args ...string) error {
 	var newArgs string
 	for _, arg := range args {
@@ -127,11 +135,13 @@ func (s session) Run(program string, args ...string) error {
 	return err
 }
 
+// SetEnv in the session
 func (s session) SetEnv(variable, arg string) error {
 	_, err := s.session.Execute(fmt.Sprintf("$Env:%s = '%s'", variable, arg))
 	return err
 }
 
+// SetLocation in the session
 func (s session) SetLocation(path string) error {
 	if err := s.CheckPath(path); err != nil {
 		return err
@@ -144,6 +154,7 @@ func (s session) SetLocation(path string) error {
 	return nil
 }
 
+// EnableCredSSP for the remote server in the session
 func (s session) EnableCredSSP() error {
 	// Enable CredSSP for double-hops in session
 	if _, err := s.session.Execute("Enable-WSManCredSSP -Role 'Server' -Force"); err != nil {

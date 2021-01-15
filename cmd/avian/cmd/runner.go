@@ -35,13 +35,17 @@ const (
 	RunnerFinished = 3
 )
 
-// runnerCmd represents the runner command
+// runnersCmd represents the runners command
+//
+// "avian runners"
 var runnersCmd = &cobra.Command{
 	Use:   "runners",
 	Short: "Runners are the automated workflow for Nuix",
 }
 
 // runnerApplyCmd represents the servers command
+//
+// "avian runners apply <runner.yml>"
 var runnersApplyCmd = &cobra.Command{
 	Use:   "apply",
 	Short: "Apply new runner for Nuix",
@@ -54,6 +58,8 @@ var runnersApplyCmd = &cobra.Command{
 }
 
 // runnerListCmd represents the servers command
+//
+// "avian runners list"
 var runnersListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List the runners",
@@ -65,6 +71,8 @@ var runnersListCmd = &cobra.Command{
 }
 
 // runnerStagesCmd represents the servers command
+//
+// "avian runners stages <runner-name>"
 var runnerStagesCmd = &cobra.Command{
 	Use:   "stages",
 	Short: "List the stages for the specified runner (specified by name)",
@@ -77,6 +85,8 @@ var runnerStagesCmd = &cobra.Command{
 }
 
 // runnerDeleteCmd represents the delete runner command
+//
+// "avian runners delete <runner-name>"
 var runnerDeleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "List the stages for the specified runner (specified by name)",
@@ -88,7 +98,10 @@ var runnerDeleteCmd = &cobra.Command{
 	},
 }
 
-// runnerScriptCmd represents the delete runner command
+// runnerScriptCmd represents the runner script command
+// (mostly used for debugging (it will generate the script for the runner))
+//
+// "avian runners script <runner-name>"
 var runnerScriptCmd = &cobra.Command{
 	Use:   "script",
 	Short: "Returns the script for the specified runner (specified by name)",
@@ -107,6 +120,7 @@ var (
 )
 
 func init() {
+	// Get the address for the API (where the avian service is listening at)
 	address := os.Getenv("AVIAN_ADDRESS")
 	if address == "" {
 		ip, err := utils.GetIPAddress()
@@ -117,14 +131,20 @@ func init() {
 		address = ip
 	}
 
+	// Get the port for the API (where the avian service is listening at)
 	port := os.Getenv("AVIAN_PORT")
 	if port == "" {
 		port = "8080"
 	}
+
+	// create the uri for the service
 	url := fmt.Sprintf("http://%s:%s/oto/", address, port)
 
+	// Set the client for the runner-service
+	// pass the uri and an empty token (since no token is needed)
 	runnerService = avian.NewRunnerService(avian.New(url, "hej"))
 
+	// Add the commands to the correct hierarchy
 	rootCmd.AddCommand(runnersCmd)
 	runnersCmd.AddCommand(runnersApplyCmd)
 	runnersCmd.AddCommand(runnersListCmd)
@@ -135,18 +155,23 @@ func init() {
 	runnersApplyCmd.Flags().BoolVar(&forceApply, "force", false, "force applying a runner")
 }
 
+// applyRunner applies the specified runner (from config) to the service
 func applyRunner(ctx context.Context, path string) error {
+	// get the runner-config
 	cfg, err := configs.Get(path)
 	if err != nil {
 		return fmt.Errorf("Couldn't parse yml-file %s : %v", path, err)
 	}
 
+	// Validate and set the settings for the case that will
+	// be created
 	runner, err := configs.SetCaseSettings(cfg.API.Runner)
 	if err != nil {
 		return err
 	}
 
-	runner.Update = forceApply
+	// Create the request
+	runner.Update = forceApply // if the runner should be updated (-f argument was used for the command)
 	resp, err := runnerService.Apply(ctx, runner)
 	if err != nil {
 		return err
@@ -156,12 +181,14 @@ func applyRunner(ctx context.Context, path string) error {
 	return nil
 }
 
+// listRunners lists all runners from the service
 func listRunners(ctx context.Context) error {
 	resp, err := runnerService.List(ctx, avian.RunnerListRequest{})
 	if err != nil {
 		return err
 	}
 
+	// format the response
 	var headers table.Row
 	var body []table.Row
 	headers = table.Row{"ID", "Runner", "Host", "Nms", "Licencetype", "Workers", "Status", "Stage"}
@@ -193,6 +220,7 @@ func listRunners(ctx context.Context) error {
 	return nil
 }
 
+// stagesRunner lists all the stages for the specified runner
 func stagesRunner(ctx context.Context, runner string) error {
 	resp, err := runnerService.Get(ctx, avian.RunnerGetRequest{Name: runner})
 	if err != nil {
@@ -213,6 +241,7 @@ func stagesRunner(ctx context.Context, runner string) error {
 	return nil
 }
 
+// deleteRunner deletes the specified runner
 func deleteRunner(ctx context.Context, runner string) error {
 	_, err := runnerService.Delete(ctx, avian.RunnerDeleteRequest{Name: runner, Force: forceDelete})
 	if err != nil {
@@ -223,6 +252,8 @@ func deleteRunner(ctx context.Context, runner string) error {
 	return nil
 }
 
+// scriptRunner generates a script for the specified runner
+// (good to use for debugging)
 func scriptRunner(ctx context.Context, runner string) error {
 	resp, err := runnerService.Script(ctx, avian.RunnerGetRequest{Name: runner})
 	if err != nil {

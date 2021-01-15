@@ -30,6 +30,8 @@ import (
 )
 
 // nmsCmd represents the nms command
+//
+// "avian nms"
 var nmsCmd = &cobra.Command{
 	Use:   "nms",
 	Short: "Handle the NMS-servers in your infrastructure for licences",
@@ -37,7 +39,9 @@ var nmsCmd = &cobra.Command{
 to keep track of licence-usage.`,
 }
 
-// nmsApplyCmd represents the servers command
+// nmsApplyCmd represents the apply command
+//
+// "avian nms apply <nms.yml>"
 var nmsApplyCmd = &cobra.Command{
 	Use:   "apply",
 	Short: "Apply new NMS-configuration",
@@ -49,7 +53,9 @@ var nmsApplyCmd = &cobra.Command{
 	},
 }
 
-// nmsLicencesCmd represents the servers command
+// nmsLicencesCmd represents the licences command
+//
+// "avian nms licences"
 var nmsLicencesCmd = &cobra.Command{
 	Use:   "licences",
 	Short: "List licences for the specified nms (specify by address)",
@@ -60,7 +66,9 @@ var nmsLicencesCmd = &cobra.Command{
 	},
 }
 
-// nmsListCmd represents the servers command
+// nmsListCmd represents the list command
+//
+// "avian nms list"
 var nmsListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List nms-servers from the backend",
@@ -74,6 +82,7 @@ var nmsListCmd = &cobra.Command{
 var nmsService *avian.NmsService
 
 func init() {
+	// Get the address for the API (where the avian service is listening at)
 	address := os.Getenv("AVIAN_ADDRESS")
 	if address == "" {
 		ip, err := utils.GetIPAddress()
@@ -84,13 +93,17 @@ func init() {
 		address = ip
 	}
 
+	// Get the port for the API (where the avian service is listening at)
 	port := os.Getenv("AVIAN_PORT")
 	if port == "" {
 		port = "8080"
 	}
+
+	// create the uri for the service
 	url := fmt.Sprintf("http://%s:%s/oto/", address, port)
 
-	nmsService = avian.NewNmsService(avian.New(url, "hej"))
+	// set the client to the NmsService to speak to the API
+	nmsService = avian.NewNmsService(avian.New(url, ""))
 
 	rootCmd.AddCommand(nmsCmd)
 	nmsCmd.AddCommand(nmsApplyCmd)
@@ -98,12 +111,15 @@ func init() {
 	nmsCmd.AddCommand(nmsLicencesCmd)
 }
 
+// applyNms applies the specified nms-servers in the yaml-file
 func applyNms(ctx context.Context, path string) error {
+	// get the nms-config
 	cfg, err := configs.Get(path)
 	if err != nil {
 		return fmt.Errorf("Couldn't parse yml-file %s : %v", path, err)
 	}
 
+	// send the request to the service
 	resp, err := nmsService.Apply(ctx, cfg.API.Nms)
 	if err != nil {
 		return err
@@ -113,6 +129,7 @@ func applyNms(ctx context.Context, path string) error {
 	return nil
 }
 
+// listNms lists all the nms-servers from the service
 func listNms(ctx context.Context) error {
 	resp, err := nmsService.List(ctx, avian.NmsListRequest{})
 	if err != nil {
@@ -130,6 +147,7 @@ func listNms(ctx context.Context) error {
 	return nil
 }
 
+// licencesNms should list all the licences from the service
 func licencesNms(ctx context.Context) error {
 	resp, err := nmsService.List(ctx, avian.NmsListRequest{})
 	if err != nil {

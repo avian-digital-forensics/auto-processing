@@ -17,21 +17,31 @@ import (
 	"go.uber.org/zap"
 )
 
+// RunnerService holds the dependencies
+// for the RunnerService
 type RunnerService struct {
 	DB         *gorm.DB
 	shell      pwsh.Powershell
 	logger     *zap.Logger
 	logHandler logging.Service
 	dataPath   string
+	serviceURL string
 }
 
-func NewRunnerService(db *gorm.DB, shell pwsh.Powershell, logger *zap.Logger, logHandler logging.Service, dataPath string) RunnerService {
+// NewRunnerService creates a new RunnerService
+func NewRunnerService(
+	db *gorm.DB,
+	shell pwsh.Powershell,
+	logger *zap.Logger,
+	logHandler logging.Service,
+	serviceURL, dataPath string) RunnerService {
 	return RunnerService{
 		DB:         db,
 		shell:      shell,
 		logger:     logger,
 		logHandler: logHandler,
 		dataPath:   dataPath,
+		serviceURL: serviceURL,
 	}
 }
 
@@ -200,6 +210,7 @@ func (s RunnerService) Apply(ctx context.Context, r api.RunnerApplyRequest) (*ap
 	return &api.RunnerApplyResponse{Runner: runner}, nil
 }
 
+// List all runners from the database
 func (s RunnerService) List(ctx context.Context, r api.RunnerListRequest) (*api.RunnerListResponse, error) {
 	s.logger.Debug("Getting runners-list")
 	var runners []api.Runner
@@ -221,6 +232,7 @@ func (s RunnerService) List(ctx context.Context, r api.RunnerListRequest) (*api.
 	return &api.RunnerListResponse{Runners: runners}, nil
 }
 
+// Get the specified runner from the db
 func (s RunnerService) Get(ctx context.Context, r api.RunnerGetRequest) (*api.RunnerGetResponse, error) {
 	s.logger.Debug("Getting runner", zap.String("runner", r.Name))
 	var runner api.Runner
@@ -233,6 +245,7 @@ func (s RunnerService) Get(ctx context.Context, r api.RunnerGetRequest) (*api.Ru
 	return &api.RunnerGetResponse{Runner: runner}, nil
 }
 
+// Delete the specified runner from the db
 func (s RunnerService) Delete(ctx context.Context, r api.RunnerDeleteRequest) (*api.RunnerDeleteResponse, error) {
 	s.logger.Debug("Getting runner to delete", zap.String("runner", r.Name))
 	/*
@@ -323,6 +336,7 @@ func (s RunnerService) Delete(ctx context.Context, r api.RunnerDeleteRequest) (*
 	return &api.RunnerDeleteResponse{}, nil
 }
 
+// Start the specified runner (used by ruby script)
 func (s RunnerService) Start(ctx context.Context, r api.RunnerStartRequest) (*api.RunnerStartResponse, error) {
 	logger := s.logger.With(zap.String("runner", r.Runner), zap.Int("runner_id", int(r.ID)))
 	logger.Info("STARTING RUNNER")
@@ -343,6 +357,7 @@ func (s RunnerService) Start(ctx context.Context, r api.RunnerStartRequest) (*ap
 	return &api.RunnerStartResponse{}, nil
 }
 
+// Failed sets the specified runner to failed (used by ruby script)
 func (s RunnerService) Failed(ctx context.Context, r api.RunnerFailedRequest) (*api.RunnerFailedResponse, error) {
 	logger := s.logger.With(zap.String("runner", r.Runner), zap.Int("runner_id", int(r.ID)))
 	logger.Info("FAILED RUNNER")
@@ -375,6 +390,7 @@ func (s RunnerService) Failed(ctx context.Context, r api.RunnerFailedRequest) (*
 	return &api.RunnerFailedResponse{}, nil
 }
 
+// Finish sets the specified runner to finished (used by ruby script)
 func (s RunnerService) Finish(ctx context.Context, r api.RunnerFinishRequest) (*api.RunnerFinishResponse, error) {
 	logger := s.logger.With(zap.String("runner", r.Runner), zap.Int("runner_id", int(r.ID)))
 	logger.Info("FINISHED RUNNER")
@@ -408,6 +424,7 @@ func (s RunnerService) Finish(ctx context.Context, r api.RunnerFinishRequest) (*
 	return &api.RunnerFinishResponse{}, nil
 }
 
+// Heartbeat is sent to the service by the runner
 func (s RunnerService) Heartbeat(ctx context.Context, r api.RunnerStartRequest) (*api.RunnerStartResponse, error) {
 	logger := s.logger.With(zap.String("runner", r.Runner), zap.Int("runner_id", int(r.ID)))
 	logger.Debug("Retrieved heartbeat from runner")
@@ -418,6 +435,7 @@ func (s RunnerService) Heartbeat(ctx context.Context, r api.RunnerStartRequest) 
 	return &api.RunnerStartResponse{}, nil
 }
 
+// StartStage sets the stage to started (used by ruby script)
 func (s RunnerService) StartStage(ctx context.Context, r api.StageRequest) (*api.StageResponse, error) {
 	logger := s.logger.With(zap.String("runner", r.Runner), zap.Int("stage_id", int(r.StageID)))
 	logger.Debug("StartStage request")
@@ -446,6 +464,7 @@ func (s RunnerService) StartStage(ctx context.Context, r api.StageRequest) (*api
 	return &api.StageResponse{Stage: stage}, nil
 }
 
+// FailedStage sets the stage to failed (used by ruby script)
 func (s RunnerService) FailedStage(ctx context.Context, r api.StageRequest) (*api.StageResponse, error) {
 	logger := s.logger.With(zap.String("runner", r.Runner), zap.Int("stage_id", int(r.StageID)))
 	logger.Debug("FailedStage request")
@@ -474,6 +493,7 @@ func (s RunnerService) FailedStage(ctx context.Context, r api.StageRequest) (*ap
 	return &api.StageResponse{Stage: stage}, nil
 }
 
+// FinishStage sets the stage to finished (used by ruby script)
 func (s RunnerService) FinishStage(ctx context.Context, r api.StageRequest) (*api.StageResponse, error) {
 	logger := s.logger.With(zap.String("runner", r.Runner), zap.Int("stage_id", int(r.StageID)))
 	logger.Debug("FinishStage request")
@@ -544,6 +564,7 @@ func (s RunnerService) LogItem(ctx context.Context, r api.LogItemRequest) (*api.
 	return &api.LogResponse{}, nil
 }
 
+// LogDebug logs a debug-message (used by ruby script)
 func (s RunnerService) LogDebug(ctx context.Context, r api.LogRequest) (*api.LogResponse, error) {
 	logger, err := s.logHandler.Get(r.Runner + "-runner.log")
 	if err != nil {
@@ -563,6 +584,7 @@ func (s RunnerService) LogDebug(ctx context.Context, r api.LogRequest) (*api.Log
 	return &api.LogResponse{}, nil
 }
 
+// LogInfo logs an info-message (used by ruby script)
 func (s RunnerService) LogInfo(ctx context.Context, r api.LogRequest) (*api.LogResponse, error) {
 	logger, err := s.logHandler.Get(r.Runner + "-runner.log")
 	if err != nil {
@@ -578,6 +600,7 @@ func (s RunnerService) LogInfo(ctx context.Context, r api.LogRequest) (*api.LogR
 	return &api.LogResponse{}, nil
 }
 
+// LogError logs a error-message (used by ruby script)
 func (s RunnerService) LogError(ctx context.Context, r api.LogRequest) (*api.LogResponse, error) {
 	logger, err := s.logHandler.Get(r.Runner + "-runner.log")
 	if err != nil {
@@ -596,6 +619,7 @@ func (s RunnerService) LogError(ctx context.Context, r api.LogRequest) (*api.Log
 	return &api.LogResponse{}, nil
 }
 
+// SetServerActivity sets the runners server to inactive/active
 func (s RunnerService) SetServerActivity(runner api.Runner, active bool) error {
 	if err := s.DB.Model(&api.Server{}).Where("hostname = ?", runner.Hostname).Update("active", active).Error; err != nil {
 		s.logger.Error("Cannot set servers activity",
@@ -608,6 +632,7 @@ func (s RunnerService) SetServerActivity(runner api.Runner, active bool) error {
 	return nil
 }
 
+// ResetNms resets the runners nms
 func (s RunnerService) ResetNms(runner api.Runner) error {
 	// Get the latest data for the nms-server
 	var nms api.Nms
@@ -650,6 +675,7 @@ func (s RunnerService) ResetNms(runner api.Runner) error {
 	return nil
 }
 
+// getPreloadedRunner gets the rnner with its stages
 func getPreloadedRunner(db *gorm.DB, runner *api.Runner) error {
 	return db.Preload("Stages.Process.EvidenceStore").
 		Preload("Stages.SearchAndTag.Files").
@@ -667,6 +693,7 @@ func getPreloadedRunner(db *gorm.DB, runner *api.Runner) error {
 		First(&runner, "name = ?", runner.Name).Error
 }
 
+// RemoveScript removes the runner script from the server
 func (s RunnerService) RemoveScript(runner api.Runner) error {
 	logger := s.logger.With(zap.String("runner", runner.Name))
 	var server api.Server
@@ -727,18 +754,20 @@ func (s RunnerService) RemoveScript(runner api.Runner) error {
 	return nil
 }
 
+// Script generates the script for the runner
 func (s RunnerService) Script(ctx context.Context, r api.RunnerGetRequest) (*api.RunnerScriptResponse, error) {
 	var runner = api.Runner{Name: r.Name}
 	if err := getPreloadedRunner(s.DB, &runner); err != nil {
 		return nil, err
 	}
-	script, err := ruby.Generate("", "", runner)
+	script, err := ruby.Generate(s.serviceURL, "", runner)
 	if err != nil {
 		return nil, err
 	}
 	return &api.RunnerScriptResponse{Script: script}, nil
 }
 
+// UploadFile uploads a file to the dataPath
 func (s RunnerService) UploadFile(ctx context.Context, r api.UploadFileRequest) (*api.UploadFileResponse, error) {
 	path := s.dataPath + r.Name
 

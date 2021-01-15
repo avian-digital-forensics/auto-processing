@@ -10,16 +10,26 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+// Service is the API for the logging
 type Service interface {
+	// Clean cleans the log-holders
 	Clean(from time.Time)
+
+	// Get gets a logger by name
 	Get(name string) (*zap.Logger, error)
 }
 
+// svc holds the dependencies for the logging.Service
 type svc struct {
+	// LogPath is where the logs are stored
 	LogPath string
-	Holder  map[string]*Logholder
+
+	// Holder holds the loggers
+	Holder map[string]*Logholder
 }
 
+// Logholder holds the dependencies
+// for a logger
 type Logholder struct {
 	lastUsed time.Time
 	lumber   *lumberjack.Logger
@@ -27,6 +37,7 @@ type Logholder struct {
 	file     *os.File
 }
 
+// New creates a new service
 func New(logPath string) Service {
 	return svc{
 		LogPath: logPath,
@@ -39,6 +50,7 @@ func New(logPath string) Service {
 func (s svc) Clean(from time.Time) {
 	for name, holder := range s.Holder {
 		if holder.lastUsed.After(from) {
+			// skip cleaning if the logger has been just after <from>
 			continue
 		}
 
@@ -64,6 +76,7 @@ func (s svc) Get(name string) (*zap.Logger, error) {
 
 // open will create or open the log specified by name
 func (s svc) open(logName string) (*zap.Logger, error) {
+	// open or create the log file
 	log, err := os.OpenFile(s.LogPath+logName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		return nil, fmt.Errorf("error opening log-file %s: %v", logName, err)
