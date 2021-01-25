@@ -127,8 +127,10 @@ func run() error {
 	}
 
 	// create a core for the zap-logger
+	consoleConfig := zap.NewProductionEncoderConfig()
+	consoleConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	core := zapcore.NewCore(
-		zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()),
+		zapcore.NewJSONEncoder(consoleConfig),
 		zapcore.AddSync(serviceLogger),
 		zap.DebugLevel,
 	)
@@ -136,8 +138,6 @@ func run() error {
 	// if the verbose-flag is used
 	// set consoleConfig to the core
 	if verbose {
-		consoleConfig := zap.NewProductionEncoderConfig()
-		consoleConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 		core = zapcore.NewTee(core, zapcore.NewCore(
 			zapcore.NewConsoleEncoder(consoleConfig),
 			zapcore.AddSync(os.Stdout),
