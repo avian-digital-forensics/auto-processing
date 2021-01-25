@@ -373,7 +373,7 @@ begin
   log_info('<%= stageName(s) %>', <%= s.ID %>, 'Starting search')
   bulk_searcher.run do |info|
     row_num += 1
-    log_item('<%= stageName(s) %>', <%= s.ID %>, 'Searching through row - current size: #{info.current_size} - total size: #{info.total_size}', row_num, '', '', '')
+    log_item('<%= stageName(s) %>', <%= s.ID %>, "Searching through row - current size: #{info.current_size} - total size: #{info.total_size}", row_num, '', '', '')
   end
   <% } else { %>
   # Search And Tag with search-query
