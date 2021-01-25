@@ -435,7 +435,7 @@ begin
     
     log_info('<%= stageName(s) %>', <%= s.ID %>, 'Searching for items to scan with query: <%= formatQuotes(s.ScanNewChildItems.Search) %>')
     scan_items = single_case.search('<%= formatQuotes(s.ScanNewChildItems.Search) %>')
-    log_debug('<%= stageName(s) %>', <%= s.ID %>, 'Found #{scan_items.length} items to scan.')
+    log_debug('<%= stageName(s) %>', <%= s.ID %>, "Found #{scan_items.length} items to scan.")
 
     log_info('<%= stageName(s) %>', <%= s.ID %>, 'Set scan-items')
     scan_processor.scan_for_new_child_items(scan_items)
