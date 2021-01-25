@@ -373,7 +373,7 @@ begin
   log_info('<%= stageName(s) %>', <%= s.ID %>, 'Starting search')
   bulk_searcher.run do |info|
     row_num += 1
-    log_item('<%= stageName(s) %>', <%= s.ID %>, 'Searching through row - current size: #{info.current_size} - total size: #{info.total_size}', row_num, '', '', '')
+    log_item('<%= stageName(s) %>', <%= s.ID %>, "Searching through row - current size: #{info.current_size} - total size: #{info.total_size}", row_num, '', '', '')
   end
   <% } else { %>
   # Search And Tag with search-query
@@ -435,7 +435,7 @@ begin
     
     log_info('<%= stageName(s) %>', <%= s.ID %>, 'Searching for items to scan with query: <%= formatQuotes(s.ScanNewChildItems.Search) %>')
     scan_items = single_case.search('<%= formatQuotes(s.ScanNewChildItems.Search) %>')
-    log_debug('<%= stageName(s) %>', <%= s.ID %>, 'Found #{scan_items.length} items to scan.')
+    log_debug('<%= stageName(s) %>', <%= s.ID %>, "Found #{scan_items.length} items to scan.")
 
     log_info('<%= stageName(s) %>', <%= s.ID %>, 'Set scan-items')
     scan_processor.scan_for_new_child_items(scan_items)

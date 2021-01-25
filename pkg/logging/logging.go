@@ -89,8 +89,10 @@ func (s svc) open(logName string) (*zap.Logger, error) {
 		MaxAge:     1, //days
 	}
 
+	consoleConfig := zap.NewProductionEncoderConfig()
+	consoleConfig.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05.000 Z0700")
 	core := zapcore.NewCore(
-		zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()),
+		zapcore.NewJSONEncoder(consoleConfig),
 		zapcore.AddSync(lumberjackLogger),
 		zap.DebugLevel,
 	)
