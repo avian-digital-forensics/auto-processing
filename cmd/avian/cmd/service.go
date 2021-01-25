@@ -128,7 +128,7 @@ func run() error {
 
 	// create a core for the zap-logger
 	consoleConfig := zap.NewProductionEncoderConfig()
-	consoleConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	consoleConfig.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05.000 Z0700")
 	core := zapcore.NewCore(
 		zapcore.NewJSONEncoder(consoleConfig),
 		zapcore.AddSync(serviceLogger),
