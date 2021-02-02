@@ -90,7 +90,10 @@ func (s svc) open(logName string) (*zap.Logger, error) {
 	}
 
 	consoleConfig := zap.NewProductionEncoderConfig()
+	// Use the same time stamp format as the Nuix logs do.
 	consoleConfig.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05.000 Z0700")
+	// Use windows line endings so the the logs are shown properly in windows notepad.
+	consoleConfig.LineEnding = "\r\n"
 	core := zapcore.NewCore(
 		zapcore.NewJSONEncoder(consoleConfig),
 		zapcore.AddSync(lumberjackLogger),
