@@ -20,6 +20,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -274,13 +275,13 @@ func setLoggers() error {
 	}
 
 	// Create access-logfile
-	accessLog, err := os.OpenFile(logPath+"access.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	accessLog, err := os.OpenFile(filepath.Join(logPath, "access.log"), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		return fmt.Errorf("error opening file: %v", err)
 	}
 
 	// Create service-logfile
-	serviceLog, err := os.OpenFile(logPath+"service.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	serviceLog, err := os.OpenFile(filepath.Join(logPath, "service.log"), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		return fmt.Errorf("error opening file: %v", err)
 	}
