@@ -135,7 +135,7 @@ def find_module_name(script_name)
 end
 
 def load_script(script_name)
-  script_path = '<%= scriptDir %>\\inapp-scripts\\automation-scripts\\' + script_name + '.rb'
+  script_path = '<%= scriptDir %>\\_root\\inapp-scripts\\automation-scripts\\' + script_name + '.rb'
   module_name = find_module_name(script_name)
   # Chomp '.rb' just in case.
   require script_path.chomp('.rb')
