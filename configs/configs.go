@@ -10,20 +10,24 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// defines the yaml config
 type Config struct {
 	API API `yaml:"api"`
 }
 
+// defines the api
 type API struct {
 	Servers []Servers                `yaml:"servers"`
 	Nms     avian.NmsApplyRequests   `yaml:"nmsApply"`
 	Runner  avian.RunnerApplyRequest `yaml:"runner"`
 }
 
+// defines the servers config
 type Servers struct {
 	Server avian.ServerApplyRequest `yaml:"server"`
 }
 
+// sets the case settings from the specified config
 func SetCaseSettings(r avian.RunnerApplyRequest) (avian.RunnerApplyRequest, error) {
 	if r.CaseSettings == nil {
 		return r, errors.New("specify caseSettings and caseLocation")
@@ -48,6 +52,7 @@ func SetCaseSettings(r avian.RunnerApplyRequest) (avian.RunnerApplyRequest, erro
 		)
 	}
 
+	//checks if compound case has been set
 	if r.CaseSettings.CompoundCase == nil || r.CaseSettings.CompoundCase.Directory == "" {
 		var compound_description string
 		var compound_investigator string
@@ -67,6 +72,7 @@ func SetCaseSettings(r avian.RunnerApplyRequest) (avian.RunnerApplyRequest, erro
 		}
 	}
 
+	//checks if review case has been set
 	if r.CaseSettings.ReviewCompound == nil || r.CaseSettings.ReviewCompound.Directory == "" {
 		var review_description string
 		var review_investigator string
@@ -89,6 +95,7 @@ func SetCaseSettings(r avian.RunnerApplyRequest) (avian.RunnerApplyRequest, erro
 	return r, nil
 }
 
+// decodes and reads the yaml
 func readYAML(path string, cfg *Config) error {
 	file, err := os.Open(path)
 	if err != nil {
