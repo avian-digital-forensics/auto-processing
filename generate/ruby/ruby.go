@@ -10,9 +10,11 @@ import (
 	"github.com/gobuffalo/plush"
 )
 
+// generates a ruby script to be used by runner
 func Generate(remoteAddress, scriptDir string, runner api.Runner) (string, error) {
 	ctx := plush.NewContext()
 
+	// sets the processing settings
 	ctx.Set("process", func(r api.Runner) bool {
 		for _, s := range r.Stages {
 			if s.Process != nil && !avian.Finished(s.Process.Status) {
@@ -22,6 +24,7 @@ func Generate(remoteAddress, scriptDir string, runner api.Runner) (string, error
 		return false
 	})
 
+	// Sets the inapp script settings
 	ctx.Set("hasInApp", func(r api.Runner) bool {
 		for _, s := range r.Stages {
 			if s.InApp != nil && !avian.Finished(s.InApp.Status) {
@@ -31,6 +34,7 @@ func Generate(remoteAddress, scriptDir string, runner api.Runner) (string, error
 		return false
 	})
 
+	// Sets the processing profile
 	ctx.Set("getProcessingProfile", func(r api.Runner) string {
 		for _, s := range r.Stages {
 			if s.Process != nil {
@@ -40,11 +44,13 @@ func Generate(remoteAddress, scriptDir string, runner api.Runner) (string, error
 		return ""
 	})
 
+	// "?
 	ctx.Set("decodeSettings", func(s inapp.Settings) template.HTML {
 		b, _ := json.Marshal(s)
 		return template.HTML(string(b))
 	})
 
+	// sets the settings for finding processing stage ID's
 	ctx.Set("getProcessingStageID", func(r api.Runner) uint {
 		for _, s := range r.Stages {
 			if s.Process != nil {
@@ -54,6 +60,7 @@ func Generate(remoteAddress, scriptDir string, runner api.Runner) (string, error
 		return 0
 	})
 
+	// sees if processing has failed
 	ctx.Set("getProcessingFailed", func(r api.Runner) bool {
 		for _, s := range r.Stages {
 			if s.Process != nil {
@@ -63,6 +70,7 @@ func Generate(remoteAddress, scriptDir string, runner api.Runner) (string, error
 		return false
 	})
 
+	// sets the processing profile path
 	ctx.Set("getProcessingProfilePath", func(r api.Runner) string {
 		for _, s := range r.Stages {
 			if s.Process != nil {
@@ -72,6 +80,7 @@ func Generate(remoteAddress, scriptDir string, runner api.Runner) (string, error
 		return ""
 	})
 
+	//sets the evidence paths
 	ctx.Set("getEvidence", func(r api.Runner) []*api.Evidence {
 		for _, s := range r.Stages {
 			if s.Process != nil {
@@ -81,6 +90,7 @@ func Generate(remoteAddress, scriptDir string, runner api.Runner) (string, error
 		return nil
 	})
 
+	//sets the different stages
 	ctx.Set("getStages", func(r api.Runner) []*api.Stage { return r.Stages })
 	ctx.Set("elasticSearch", func(r api.Runner) bool { return r.CaseSettings.Case.ElasticSearch != nil })
 	ctx.Set("isNoProcessing", func(s *api.Stage) bool { return s.Process == nil })
@@ -98,8 +108,11 @@ func Generate(remoteAddress, scriptDir string, runner api.Runner) (string, error
 	ctx.Set("formatQuotes", func(s string) template.HTML { return template.HTML(s) })
 	ctx.Set("shouldRun", func(s *api.Stage) bool { return avian.StageState(s) != avian.StatusFinished })
 
+	//sets the remote adress and scripts directory
 	ctx.Set("remoteAddress", remoteAddress)
 	ctx.Set("scriptDir", scriptDir)
 	ctx.Set("runner", runner)
+
+	//creates the template
 	return plush.Render(rubyTemplate, ctx)
 }

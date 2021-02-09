@@ -20,6 +20,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -127,8 +128,10 @@ func run() error {
 	}
 
 	// create a core for the zap-logger
+	consoleConfig := zap.NewProductionEncoderConfig()
+	consoleConfig.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05.000 Z0700")
 	core := zapcore.NewCore(
-		zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()),
+		zapcore.NewJSONEncoder(consoleConfig),
 		zapcore.AddSync(serviceLogger),
 		zap.DebugLevel,
 	)
@@ -136,8 +139,6 @@ func run() error {
 	// if the verbose-flag is used
 	// set consoleConfig to the core
 	if verbose {
-		consoleConfig := zap.NewProductionEncoderConfig()
-		consoleConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 		core = zapcore.NewTee(core, zapcore.NewCore(
 			zapcore.NewConsoleEncoder(consoleConfig),
 			zapcore.AddSync(os.Stdout),
@@ -274,13 +275,13 @@ func setLoggers() error {
 	}
 
 	// Create access-logfile
-	accessLog, err := os.OpenFile(logPath+"access.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	accessLog, err := os.OpenFile(filepath.Join(logPath, "access.log"), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		return fmt.Errorf("error opening file: %v", err)
 	}
 
 	// Create service-logfile
-	serviceLog, err := os.OpenFile(logPath+"service.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	serviceLog, err := os.OpenFile(filepath.Join(logPath, "service.log"), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		return fmt.Errorf("error opening file: %v", err)
 	}
