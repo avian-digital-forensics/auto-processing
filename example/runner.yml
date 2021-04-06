@@ -1,13 +1,13 @@
 api:
   runner:
     # Set name to something unique (cases will be named after this)
-    name: runner-test
+    name: Albert-Test
     
     # Specify the host for the remote-run (localhost if local-run)
-    hostname: dev01.avian.dk
+    hostname: dev02.avian.dk
 
     # Set the address for the licence-source
-    nms: license.avian.dk
+    nms: license2.avian.dk
 
     # set licencetype to the runner
     licence: enterprise-workstation
@@ -22,18 +22,20 @@ api:
     caseSettings:
 
       # caseLocation is the parent-folder for where the cases will be created
-      caseLocation: C:\Users\sja\Desktop\auto-processing-v11\configs
+      caseLocation: C:\Users\aga\Documents\cases\automation_test
       
       # Add information for the case
       case:
-        description: info
-        investigator: simon
+        description: TEST-DAY-ALL
+        investigator: Dennis Karlsson
+        case:
         # Elasticsearch-configuration example
-        # elasticSearch:
-        #   clusterName: aviane68
-        #   nuixTransportHost: aviane68.avian.dk:9300
-        #   indexNumberOfReplicas: 1
-        #   indexNumberOfShards: 1
+        elasticSettings:
+          clusterName: aviane68
+          hosts:
+            - http://aviane68.avian.dk:9300
+          numberOfShards: 1
+          numberOfReplicas: 1
 
       # Add information for the compound case
       compoundCase:
@@ -56,11 +58,11 @@ api:
     stages:
     - process:
         profile: Default
-        profilePath: C:\ProgramData\Nuix\Processing Profiles\Default.xml
+        profilePath: C:\auto-v35\Processing Profiles\mobile.xml
         evidenceStore:
           # First evidence to process
           - name: evidence_1
-            directory: C:\Evidence\kate_symes\kate_symes_003_1_1.pst
+            directory: C:\Evidence
             description: this is the description for the evidence
             encoding: UTF-8
             timeZone: US/Pacific
@@ -68,82 +70,39 @@ api:
             locale: en-US
             
           # Second evidence to process
-          - name: evidence_2
-            directory: C:\Evidence\kate_symes\kate_symes_003_1_2.pst
-            description: this is the description for the evidence
-            encoding: UTF-8
-            timeZone: US/Pacific
-            custodian: Suspect
-            locale: en-US
-  
-    - searchAndTag:
-        search: kind:email
-        tag: hello
-
-    - searchAndTag:
-        files:
-        - path: C:\Users\sja\Desktop\auto-processing-v13\search_and_tag_1.json
-        - path: C:\Users\sja\Desktop\auto-processing-v13\search_and_tag_2.json
-    
-    - populate:
-        search: tag:hello
-        types:
-          - type: native
-          - type: pdf
-  
-    - ocr:
-        profile: Default
-        profilePath: C:\ProgramData\Nuix\OCR Profiles\Default.xml
-        search: tag:hello
-        batchSize: 100
-    
-    - exclude:
-        search: kind:email
-        reason: not_needed
-  
-    - reload:
-        profile: Default
-        profilePath: C:\ProgramData\Nuix\Processing Profiles\Default.xml
-        search: kind:email
-
-    - syncDescendants:
-        search: tag:items-to-sync
-
-    - scanNewChildItems:
-        profile: Default # processing profile to use for the scan
-        search: tag:items-to-scan
+#          - name: evidence_2
+#            directory: C:\Evidence\kim_ward
+#            description: this is the description for the evidence
+#            encoding: UTF-8
+#            timeZone: US/Pacific
+#            custodian: Suspect
+#            locale: en-US
 
      # inApp-scripts example
      #
      # to run inApp-scripts you need to download
      # the repository from https://github.com/avian-digital-forensics/avian-scripts
      # specify in the server.yml to the path where you have downloaded the repository
-    - inApp:
+#    - inApp:
         # name of the inApp-script
-        name: import_printed_images
-        # config of the inApp-script (specified in another .yml)
-        config: C:\auto-processing-v25\example\import_printed_images.yml
+#        name: import_printed_images
+#        # config of the inApp-script (specified in another .yml)
+#        config: C:\auto-v35\in-app-configs\import_printed_images.yml
 
     - inApp:
         # name of the inApp-script
-        name: number_of_descendants
+        name: qc_cull
         # config of the inApp-script (specified in another .yml)
-        config: C:\auto-processing-v25\example\in-app-configs\number_of_descendants.yml
+        config: C:\Users\aga\Documents\auto-processing\auto-processing\example\in-app-configs\qc_cull.yml
 
-    - inApp:
+#    - inApp:
         # name of the inApp-script
-        name: tag_exchange_emails_with_duplicates
+#        name: tag_exchange_emails_with_duplicates
         # config of the inApp-script (specified in another .yml)
-        config: C:\auto-processing-v25\example\in-app-configs\tag_exchange_emails_with_duplicates.yml
+#        config: C:\auto-v35\in-app-configs\tag_exchange_emails_with_duplicates.yml
 
     # Switches are available from v16
     switches:
-      # - -Dnuix.processing.sharedTempDirectory=<path> ## Change this to override worker temp location otherwise defined in the processing profile
-      # - -Dnuix.loglevel=DEBUG
-      # - -java.io.tmpdir=<tempfolder>\javatmp
-      # - -Dnuix.worker.tmpdir=<tempfolder>\workertemp
-      # - -Dnuix.logdir=<logfolder> ## Remember to change filebeat config if changing logdir
-
-      # Switches for the APM for montoring with elastic
-      # - "-javaagent:c:\\java\\elastic-apm-agent.jar"
-      # - "-Dnuix.thread.workers=true"
+      - "-javaagent:c:\\auto-v35\\agent\\elastic-apm-agent.jar"
+      - "-Dnuix.logdir=C:\\Users\\aga\\Documents\\auto-processing\\auto-processing\\nuix-logs"
+      - "-Dnuix.worker.jvm.arguments=-javaagent:c:\\auto-v35\\worker-a\\elastic-apm-agent.jar"

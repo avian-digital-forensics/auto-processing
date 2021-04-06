@@ -11,6 +11,7 @@ require (
 	github.com/jinzhu/gorm v1.9.16
 	github.com/matryer/is v1.4.0
 	github.com/natefinch/lumberjack v2.0.0+incompatible
+	github.com/pacedotdev/oto v0.10.10 // indirect
 	github.com/pacedotdev/oto/otohttp v0.8.0
 	github.com/pkg/errors v0.9.1
 	github.com/simonjanss/go-powershell v0.0.0-20201014075207-9ada2bb4ef25

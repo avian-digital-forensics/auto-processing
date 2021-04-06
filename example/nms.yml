@@ -2,13 +2,13 @@ api:
   nmsApply:
     nms:
       # Specify the NMS
-      - address: license.avian.dk
+      - address: license2.avian.dk
         port: 27443
 
         # Username and pw is not needed for NMS with AD-sync
         # (if the Runners starts from an AD-user)
-        username: user
-        password: secret
+        username: aga
+        password: Summer2016
 
         # Specify amount of workers licenced to the NMS
         workers: 6
@@ -22,23 +22,3 @@ api:
               type: law-enforcement-desktop
               amount: 1
     
-      # Specify another NMS
-      - address: avian-server1.avian.dk
-        port: 27443
-
-        # Username and pw is not needed for NMS with AD-sync
-        # (if the runner starts with an AD-user)
-        username: user
-        password: secret
-
-        # Specify amount of workers licenced to the NMS
-        workers: 9
-
-        # Add licences avilable in the NMS
-        licences:
-          - licence:
-              type: enterprise-workstation
-              amount: 2
-          - licence:
-              type: law-enforcement-desktop
-              amount: 1
