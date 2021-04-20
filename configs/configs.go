@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	avian "github.com/avian-digital-forensics/auto-processing/pkg/avian-client"
 
@@ -93,6 +94,8 @@ func PostprocessRunnerConfig(r avian.RunnerApplyRequest) avian.RunnerApplyReques
 			Investigator: review_investigator,
 		}
 	}
+
+	r.Name = strings.ToLower(r.Name)
 
 	return r
 }
