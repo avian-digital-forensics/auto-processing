@@ -163,12 +163,12 @@ func applyRunner(ctx context.Context, path string) error {
 		return fmt.Errorf("Couldn't parse yml-file %s : %v", path, err)
 	}
 
-	// Validate and set the settings for the case that will
-	// be created
-	runner, err := configs.SetCaseSettings(cfg.API.Runner)
+	// Validate and post-process runner config.
+	err = configs.ValidateRunnerConfig(cfg.API.Runner)
 	if err != nil {
 		return err
 	}
+	runner := configs.PostprocessRunnerConfig(cfg.API.Runner)
 
 	// Create the request
 	runner.Update = forceApply // if the runner should be updated (-f argument was used for the command)

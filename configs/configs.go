@@ -27,16 +27,18 @@ type Servers struct {
 	Server avian.ServerApplyRequest `yaml:"server"`
 }
 
-// sets the case settings from the specified config
-func SetCaseSettings(r avian.RunnerApplyRequest) (avian.RunnerApplyRequest, error) {
+func ValidateRunnerConfig(r avian.RunnerApplyRequest) error {
 	if r.CaseSettings == nil {
-		return r, errors.New("specify caseSettings and caseLocation")
+		return errors.New("specify caseSettings and caseLocation")
 	}
 
 	if r.CaseSettings.CaseLocation == "" {
-		return r, errors.New("must specify caseLocation for caseSettings")
+		return errors.New("must specify caseLocation for caseSettings")
 	}
+	return nil
+}
 
+func PostprocessRunnerConfig(r avian.RunnerApplyRequest) avian.RunnerApplyRequest {
 	if r.CaseSettings.Case == nil {
 		r.CaseSettings.Case = &avian.Case{}
 	}
@@ -92,7 +94,7 @@ func SetCaseSettings(r avian.RunnerApplyRequest) (avian.RunnerApplyRequest, erro
 		}
 	}
 
-	return r, nil
+	return r
 }
 
 // decodes and reads the yaml
