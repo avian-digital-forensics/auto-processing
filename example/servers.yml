@@ -14,4 +14,4 @@ api:
         nuixPath: C:\Program Files\Nuix\Nuix 9.0
 
         # Specify which location the service should transfer avian-scripts from to the specified server
-        avianScripts: C:\Users\aga\Documents\avian-scripts\avian-scripts-qccull2.1_beta6
+        avianScripts: C:\Users\aga\Documents\avian-scripts\avian-scripts-qc-cull-2-1

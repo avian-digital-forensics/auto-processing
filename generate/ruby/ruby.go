@@ -1,7 +1,6 @@
 package ruby
 
 import (
-	"encoding/json"
 	"html/template"
 
 	api "github.com/avian-digital-forensics/auto-processing/pkg/avian-api"
@@ -45,9 +44,9 @@ func Generate(remoteAddress, scriptDir string, runner api.Runner) (string, error
 	})
 
 	// "?
-	ctx.Set("decodeSettings", func(s inapp.Settings) template.HTML {
-		b, _ := json.Marshal(s)
-		return template.HTML(string(b))
+	ctx.Set("decodeSettings", func(s inapp.Settings) string {
+
+		return s.SettingsFile
 	})
 
 	// sets the settings for finding processing stage ID's

@@ -615,15 +615,7 @@ type File struct {
 }
 
 type Settings struct {
-	ArchivedPrefix                     string `json:"archivedPrefix" yaml:"archivedPrefix"`
-	ArchivedTag                        string `json:"archivedTag" yaml:"archivedTag"`
-	ArchivedHasDuplicateTag            string `json:"archivedHasDuplicateTag" yaml:"archivedHasDuplicateTag"`
-	ArchivedMissingDuplicateTag        string `json:"archivedMissingDuplicateTag" yaml:"archivedMissingDuplicateTag"`
-	HasMissingAttachmentsTag           string `json:"hasMissingAttachmentsTag" yaml:"hasMissingAttachmentsTag"`
-	ExcludeArchivedItemsWithDuplicates bool   `json:"excludeArchivedItemsWithDuplicates" yaml:"excludeArchivedItemsWithDuplicates"`
-	MainDirectory                      string `json:"mainDirectory" yaml:"mainDirectory"`
-	MetadataKey                        string `json:"metadataKey" yaml:"metadataKey"`
-	SourcePath                         string `json:"sourcePath" yaml:"sourcePath"`
+	SettingsFile string `json:"settingsFile" yaml:"settingsFile"`
 }
 
 // InApp script as a stage

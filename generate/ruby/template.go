@@ -113,7 +113,7 @@ def log_error(stage, stage_id, message, exception)
 end
 
 <%= if (hasInApp(runner)) { %># ProgressHandler class
-require '<%= scriptDir %>\\utils\\progress_handler'
+require File.join('<%= scriptDir %>', '_root', 'utils', 'progress_handler')
 
 # Converts a script name to a module name.
 # There may very well be easier ways of doing this.
@@ -135,7 +135,7 @@ def find_module_name(script_name)
 end
 
 def load_script(script_name)
-  script_path = '<%= scriptDir %>\\_root\\inapp-scripts\\automation-scripts\\' + script_name + '.rb'
+  script_path = File.join('<%= scriptDir %>', '_root', 'inapp-scripts', 'automation-scripts', "#{script_name}.rb")
   module_name = find_module_name(script_name)
   # Chomp '.rb' just in case.
   require script_path.chomp('.rb')
@@ -580,7 +580,22 @@ begin
   }
 
   # Set settings for the script
-  settings = <%= decodeSettings(s.InApp.Settings) %>
+  require 'yaml'
+  settings_file = '<%= decodeSettings(s.InApp.Settings) %>'
+  read_settings = YAML.load(settings_file)
+  settings = {}
+  for key,value in read_settings 
+    puts("klumpfisk: #{key.to_s}=#{value.to_s}")
+    case key
+      when Symbol
+        puts('aborre: ' + key.to_sym.to_s)
+        settings[key] = value
+      else
+        puts('gedde: ' + key.to_sym.to_s)
+        settings[key.to_sym] = value
+    end
+  end
+  settings[:root_directory] = File.join('<%= scriptDir %>', '_root')
 
   # run the script
   script.run(single_case, $utilities, settings, progress_handler)<% } %>
