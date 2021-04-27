@@ -112,7 +112,7 @@ def log_error(stage, stage_id, message, exception)
   })
 end
 
-<%= if (hasInApp(runner)) { %># ProgressHandler class
+<%= if (hasInAppStage(runner)) { %># ProgressHandler class
 require File.join('<%= scriptDir %>', '_root', 'utils', 'progress_handler')
 
 # Converts a script name to a module name.
@@ -251,7 +251,7 @@ review_compound = nil
 # start the runner
 start_runner(single_case.guid.tr('-', ''))
 
-<%= if (process(runner)) { %><%= if ((!getProcessingFailed(runner)) && (!elasticSearch(runner))) { %>
+<%= if (hasProcessingStage(runner)) { %><%= if ((!getProcessingFailed(runner)) && (!elasticSearch(runner))) { %>
 # Create or open the compound-case
 log_info('', 0, 'Opening compound-case: <%= runner.CaseSettings.CompoundCase.Name %>')
 compound_case = open_case({ 
@@ -581,7 +581,7 @@ begin
 
   # Set settings for the script
   require 'yaml'
-  settings_file = '<%= decodeSettings(s.InApp.Settings) %>'
+  settings_file = '<%= settingsFile(s.InApp.Settings) %>'
   read_settings = YAML.load(settings_file)
   settings = {}
   for key,value in read_settings 
@@ -607,7 +607,7 @@ rescue => e
   # Handle the exception for stage
   # Set the <%= stageName(s) %>-stage to failed (update api)
   failed(<%= s.ID %>)
-  <%= if (process(runner)) { %>
+  <%= if (hasProcessingStage(runner)) { %>
   # Tear down the cases
   tear_down(single_case, compound_case, review_compound)
   <% } else { %>
@@ -621,7 +621,7 @@ rescue => e
   exit(false)
 end
 <% } %> <% } %>
-<%= if (process(runner)) { %>
+<%= if (hasProcessingStage(runner)) { %>
 # Tear down the cases
 tear_down(single_case, compound_case, review_compound)
 <% } else { %>
