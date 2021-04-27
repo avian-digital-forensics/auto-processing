@@ -68,6 +68,7 @@ func (s NmsService) Apply(ctx context.Context, r api.NmsApplyRequests) (*api.Nms
 		newNms.Username = nms.Username
 		newNms.Password = nms.Password
 		newNms.Workers = nms.Workers
+		newNms.IsRelay = nms.IsRelay
 
 		// Create hash-map for the existing licences
 		s.logger.Debug("Creating hash-map for nms-licences", zap.String("nms", nms.Address))

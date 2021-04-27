@@ -704,6 +704,8 @@ type Nms struct {
 	InUse int64 `json:"inUse" yaml:"inUse"`
 	// Licences available at the server
 	Licences []Licence `json:"licences" yaml:"licences"`
+	// Is NMS a CLS relay server
+	IsRelay bool `json:"isRelay" yaml:"isRelay"`
 }
 
 // NmsApplyRequest is the input-object for Apply in the NMS-service
@@ -720,6 +722,8 @@ type NmsApplyRequest struct {
 	Workers int64 `json:"workers" yaml:"workers"`
 	// Licences available at the server
 	Licences []Licences `json:"licences" yaml:"licences"`
+	// Is NMS a CLS relay server
+	IsRelay bool `json:"isRelay" yaml:"isRelay"`
 }
 
 type NmsApplyRequests struct {
