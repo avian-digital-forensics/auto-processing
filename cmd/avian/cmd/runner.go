@@ -90,7 +90,7 @@ var runnerStagesCmd = &cobra.Command{
 // "avian runners delete <runner-name>"
 var runnerDeleteCmd = &cobra.Command{
 	Use:   "delete",
-	Short: "List the stages for the specified runner (specified by name)",
+	Short: "Deletes the specified runner (specified by name)",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := deleteRunner(context.Background(), strings.ToLower(args[0])); err != nil {
