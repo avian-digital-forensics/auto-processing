@@ -89,6 +89,8 @@ func (q *Queue) loop() {
 					continue
 				}
 
+				//  No neet to set the root directory in the script settings, as it is done in the ruby script.
+
 				// set the settings to the inApp-stage
 				s.InApp.Settings = settings
 			}
