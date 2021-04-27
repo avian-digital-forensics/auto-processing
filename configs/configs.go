@@ -79,7 +79,7 @@ func PostprocessRunnerConfig(runner avian.RunnerApplyRequest) avian.RunnerApplyR
 		}
 	}
 
-	//checks if review case has been set
+	// Checks if review case has been set.
 	if runner.CaseSettings.ReviewCompound == nil || runner.CaseSettings.ReviewCompound.Directory == "" {
 		var review_description string
 		var review_investigator string
