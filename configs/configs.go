@@ -23,11 +23,13 @@ type API struct {
 	Runner  avian.RunnerApplyRequest `yaml:"runner"`
 }
 
-// defines the servers config
+// Defines the servers config.
 type Servers struct {
 	Server avian.ServerApplyRequest `yaml:"server"`
 }
 
+// Validates the runner config.
+// Returns an error if any are found or nil if the config is valid.
 func ValidateRunnerConfig(r avian.RunnerApplyRequest) error {
 	if r.CaseSettings == nil {
 		return errors.New("specify caseSettings and caseLocation")
@@ -39,6 +41,8 @@ func ValidateRunnerConfig(r avian.RunnerApplyRequest) error {
 	return nil
 }
 
+// Performs necessary post-processing for runner configs.
+// For example sets case names based on runner name and therafter lowercases the runner name.
 func PostprocessRunnerConfig(r avian.RunnerApplyRequest) avian.RunnerApplyRequest {
 	if r.CaseSettings.Case == nil {
 		r.CaseSettings.Case = &avian.Case{}
@@ -55,7 +59,7 @@ func PostprocessRunnerConfig(r avian.RunnerApplyRequest) avian.RunnerApplyReques
 		)
 	}
 
-	//checks if compound case has been set
+	// Checks if compound case has been set.
 	if r.CaseSettings.CompoundCase == nil || r.CaseSettings.CompoundCase.Directory == "" {
 		var compound_description string
 		var compound_investigator string
@@ -100,7 +104,21 @@ func PostprocessRunnerConfig(r avian.RunnerApplyRequest) avian.RunnerApplyReques
 	return r
 }
 
-// decodes and reads the yaml
+// Validates the server config.
+// Returns an error if any are found or nil if the config is valid.
+func ValidateServerConfig(server avian.ServerApplyRequest) error {
+	return nil
+}
+
+// Performs necessary post-processing for server configs.
+// For example sets the hostname to lower case.
+func PostprocessServerConfig(server avian.ServerApplyRequest) avian.ServerApplyRequest {
+	server.Hostname = strings.ToLower(server.Hostname)
+
+	return server
+}
+
+// Decodes and reads the yaml.
 func readYAML(path string, cfg *Config) error {
 	file, err := os.Open(path)
 	if err != nil {
@@ -111,7 +129,7 @@ func readYAML(path string, cfg *Config) error {
 	return decoder.Decode(cfg)
 }
 
-// Get returns data from yml file specified as path
+// Get returns data from yml file specified as path.
 func Get(path string) (*Config, error) {
 	var cfg Config
 	err := readYAML(path, &cfg)
