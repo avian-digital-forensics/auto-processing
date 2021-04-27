@@ -286,7 +286,7 @@ func (r *run) start() error {
 		args = append(args, "-licencesourcetype server")
 	}
 
-	// set the generated scripts name in the end of the args
+	// Set the generated scripts name in the end of the args.
 	args = append(args, scriptName)
 
 	// set the powershell-sessions location to the nuix-path
