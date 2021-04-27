@@ -2,16 +2,31 @@ api:
   servers:
     # Servers available for remote connection
     - server:
-        # Specify hostname and os for server
-        hostname: dev02.avian.dk
-        operatingSystem: windows
-        
-        # Specify username and password is required from release 20
-        username: dka@avian.dk
-        password: Mj62dc66fk
+      # Specify hostname and os for server
+      hostname: dev01.avian.dk
+      operatingSystem: windows
+      
+      # Specify username and password is required from release 20
+      username: user
+      password: secret
 
-        # Specify path to nuix for the server
-        nuixPath: C:\Program Files\Nuix\Nuix 9.0
+      # Specify path to nuix for the server
+      nuixPath: C:\Program Files\Nuix\Nuix 8.4
 
-        # Specify which location the service should transfer avian-scripts from to the specified server
-        avianScripts: C:\Users\aga\Documents\avian-scripts\avian-scripts-qc-cull-2-1
+      # Specify which location the service should transfer avian-scripts from to the specified server
+      avianScripts: C:\avian-scripts-directory
+
+    # Specify another server
+    - server:
+      hostname: sune
+      operatingSystem: windows
+
+      # Specify username and password is required from release 20
+      username: user
+      password: secret
+
+      # Specify path to nuix for the server
+      nuixPath: C:\Program Files\Nuix\Nuix 8.4
+
+      # Specify which location the service should transfer avian-scripts from to the specified server
+      avianScripts: C:\avian-scripts-directory
