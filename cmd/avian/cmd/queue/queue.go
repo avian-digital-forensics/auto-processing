@@ -274,7 +274,7 @@ func (r *run) start() error {
 		"-licenceworkers " + fmt.Sprintf("%d", r.runner.Workers),
 		"-signout",
 	}
-	// add switches
+	// Add switches.
 	for _, sw := range r.runner.Switches {
 		args = append(args, fmt.Sprintf("%s", sw.Value))
 	}
