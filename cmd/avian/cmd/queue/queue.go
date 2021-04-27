@@ -278,7 +278,7 @@ func (r *run) start() error {
 	for _, sw := range r.runner.Switches {
 		args = append(args, fmt.Sprintf("%s", sw.Value))
 	}
-	//add correct switches for relay servers as well
+	// Add correct switches for relay servers as well.
 	if r.nms.IsRelay {
 		args = append(args, "-Dnuix.licence.handlers=local-relay-server-local-users")
 		args = append(args, "-licencesourcetype cloud-server")
