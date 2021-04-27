@@ -100,6 +100,7 @@ func PostprocessRunnerConfig(r avian.RunnerApplyRequest) avian.RunnerApplyReques
 	}
 
 	r.Name = strings.ToLower(r.Name)
+	r.Hostname = strings.ToLower(r.Hostname)
 
 	return r
 }
