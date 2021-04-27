@@ -12,16 +12,12 @@ api:
 
         # Specify amount of workers licenced to the NMS
         workers: 6
-
-        # Add licences avilable in the NMS
         licences:
-          - licence:
-              type: enterprise-workstation
-              amount: 2
           - licence:
               type: law-enforcement-desktop
               amount: 1
-    
+              
+    nms:
       # Specify another NMS
       - address: avian-server1.avian.dk
         port: 27443
@@ -42,3 +38,4 @@ api:
           - licence:
               type: law-enforcement-desktop
               amount: 1
+              

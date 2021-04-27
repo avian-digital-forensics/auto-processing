@@ -88,8 +88,8 @@ func (q *Queue) loop() {
 					// FIXME: currently just logging the error - maybe we should return the error(?)
 					continue
 				}
-				// Set the directory to the settings for where the inApp-scripts are located
-				settings.MainDirectory = utils.RemoteScriptDir(server.NuixPath, server.AvianScripts)
+
+				//  No neet to set the root directory in the script settings, as it is done in the ruby script.
 
 				// set the settings to the inApp-stage
 				s.InApp.Settings = settings
@@ -288,7 +288,7 @@ func (r *run) start() error {
 		logger.Error("Failed to set location", zap.String("exception", err.Error()))
 		return fmt.Errorf("Failed to set location: %v", err)
 	}
-
+	logger.Info("Running powershell command.", zap.String("args", strings.Join(args, " ")))
 	return session.Run("nuix_console.exe", args...)
 }
 

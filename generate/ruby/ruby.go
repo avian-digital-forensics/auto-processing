@@ -1,7 +1,6 @@
 package ruby
 
 import (
-	"encoding/json"
 	"html/template"
 
 	api "github.com/avian-digital-forensics/auto-processing/pkg/avian-api"
@@ -10,109 +9,121 @@ import (
 	"github.com/gobuffalo/plush"
 )
 
-// generates a ruby script to be used by runner
+// Generates a ruby script to be used by runner.
 func Generate(remoteAddress, scriptDir string, runner api.Runner) (string, error) {
 	ctx := plush.NewContext()
 
-	// sets the processing settings
-	ctx.Set("process", func(r api.Runner) bool {
-		for _, s := range r.Stages {
-			if s.Process != nil && !avian.Finished(s.Process.Status) {
+	// The code below defines functions that can be called when generating the ruby script.
+
+	// Whether the the runner has an unfinished processing stage.
+	ctx.Set("hasProcessingStage", func(runner api.Runner) bool {
+		for _, stage := range runner.Stages {
+			if stage.Process != nil && !avian.Finished(stage.Process.Status) {
 				return true
 			}
 		}
 		return false
 	})
 
-	// Sets the inapp script settings
-	ctx.Set("hasInApp", func(r api.Runner) bool {
-		for _, s := range r.Stages {
-			if s.InApp != nil && !avian.Finished(s.InApp.Status) {
+	// Whether the the runner has an unfinished in-app script stage.
+	ctx.Set("hasInAppStage", func(runner api.Runner) bool {
+		for _, stage := range runner.Stages {
+			if stage.InApp != nil && !avian.Finished(stage.InApp.Status) {
 				return true
 			}
 		}
 		return false
 	})
 
-	// Sets the processing profile
-	ctx.Set("getProcessingProfile", func(r api.Runner) string {
-		for _, s := range r.Stages {
-			if s.Process != nil {
-				return s.Process.Profile
+	// Gets the processing profile of the first processing stage.
+	ctx.Set("getProcessingProfile", func(runner api.Runner) string {
+		for _, stage := range runner.Stages {
+			if stage.Process != nil {
+				return stage.Process.Profile
 			}
 		}
 		return ""
 	})
 
-	// "?
-	ctx.Set("decodeSettings", func(s inapp.Settings) template.HTML {
-		b, _ := json.Marshal(s)
-		return template.HTML(string(b))
+	// Gets the settings file of the given in-app script settings as a string.
+	ctx.Set("settingsFile", func(settings inapp.Settings) string {
+
+		return settings.SettingsFile
 	})
 
-	// sets the settings for finding processing stage ID's
-	ctx.Set("getProcessingStageID", func(r api.Runner) uint {
-		for _, s := range r.Stages {
-			if s.Process != nil {
-				return s.ID
+	// Gets the stage ID of the first processing stage.
+	ctx.Set("getProcessingStageID", func(runner api.Runner) uint {
+		for _, stage := range runner.Stages {
+			if stage.Process != nil {
+				return stage.ID
 			}
 		}
 		return 0
 	})
 
-	// sees if processing has failed
-	ctx.Set("getProcessingFailed", func(r api.Runner) bool {
-		for _, s := range r.Stages {
-			if s.Process != nil {
-				return (s.Process.Status == avian.StatusFailed)
+	// Returns whether the first processing stage has failed.
+	ctx.Set("getProcessingFailed", func(runner api.Runner) bool {
+		for _, stage := range runner.Stages {
+			if stage.Process != nil {
+				return (stage.Process.Status == avian.StatusFailed)
 			}
 		}
 		return false
 	})
 
-	// sets the processing profile path
-	ctx.Set("getProcessingProfilePath", func(r api.Runner) string {
-		for _, s := range r.Stages {
-			if s.Process != nil {
-				return s.Process.ProfilePath
+	// Gets the path to the processing profile of the first processing stage.
+	// Retuns "" if there is no processing stage.
+	ctx.Set("getProcessingProfilePath", func(runner api.Runner) string {
+		for _, stage := range runner.Stages {
+			if stage.Process != nil {
+				return stage.Process.ProfilePath
 			}
 		}
 		return ""
 	})
 
-	//sets the evidence paths
-	ctx.Set("getEvidence", func(r api.Runner) []*api.Evidence {
-		for _, s := range r.Stages {
-			if s.Process != nil {
-				return s.Process.EvidenceStore
+	// Gets the evidence store of the first processing stage.
+	// Returns nil if there is no processing stage.
+	ctx.Set("getEvidence", func(runner api.Runner) []*api.Evidence {
+		for _, stage := range runner.Stages {
+			if stage.Process != nil {
+				return stage.Process.EvidenceStore
 			}
 		}
 		return nil
 	})
 
-	//sets the different stages
-	ctx.Set("getStages", func(r api.Runner) []*api.Stage { return r.Stages })
-	ctx.Set("elasticSearch", func(r api.Runner) bool { return r.CaseSettings.Case.ElasticSearch != nil })
-	ctx.Set("isNoProcessing", func(s *api.Stage) bool { return s.Process == nil })
-	ctx.Set("searchAndTag", func(s *api.Stage) bool { return s.SearchAndTag != nil && !avian.Finished(s.SearchAndTag.Status) })
-	ctx.Set("exclude", func(s *api.Stage) bool { return s.Exclude != nil && !avian.Finished(s.Exclude.Status) })
-	ctx.Set("ocr", func(s *api.Stage) bool { return s.Ocr != nil && !avian.Finished(s.Ocr.Status) })
-	ctx.Set("populate", func(s *api.Stage) bool { return s.Populate != nil && !avian.Finished(s.Populate.Status) })
-	ctx.Set("reload", func(s *api.Stage) bool { return s.Reload != nil && !avian.Finished(s.Reload.Status) })
-	ctx.Set("inApp", func(s *api.Stage) bool { return s.InApp != nil && !avian.Finished(s.InApp.Status) })
-	ctx.Set("scanNewChildItems", func(s *api.Stage) bool {
-		return s.ScanNewChildItems != nil && !avian.Finished(s.ScanNewChildItems.Status)
+	// Returns all stages for the runner.
+	ctx.Set("getStages", func(runner api.Runner) []*api.Stage { return runner.Stages })
+	ctx.Set("elasticSearch", func(runner api.Runner) bool { return runner.CaseSettings.Case.ElasticSearch != nil })
+	ctx.Set("isNoProcessing", func(stage *api.Stage) bool { return stage.Process == nil })
+	// The next functions return for a stage whether they are the specic type and are unfinished.
+	ctx.Set("searchAndTag", func(stage *api.Stage) bool {
+		return stage.SearchAndTag != nil && !avian.Finished(stage.SearchAndTag.Status)
 	})
-	ctx.Set("syncDescendants", func(s *api.Stage) bool { return s.SyncDescendants != nil && !avian.Finished(s.SyncDescendants.Status) })
-	ctx.Set("stageName", func(s *api.Stage) string { return avian.Name(s) })
-	ctx.Set("formatQuotes", func(s string) template.HTML { return template.HTML(s) })
-	ctx.Set("shouldRun", func(s *api.Stage) bool { return avian.StageState(s) != avian.StatusFinished })
+	ctx.Set("exclude", func(stage *api.Stage) bool { return stage.Exclude != nil && !avian.Finished(stage.Exclude.Status) })
+	ctx.Set("ocr", func(stage *api.Stage) bool { return stage.Ocr != nil && !avian.Finished(stage.Ocr.Status) })
+	ctx.Set("populate", func(stage *api.Stage) bool { return stage.Populate != nil && !avian.Finished(stage.Populate.Status) })
+	ctx.Set("reload", func(stage *api.Stage) bool { return stage.Reload != nil && !avian.Finished(stage.Reload.Status) })
+	ctx.Set("inApp", func(stage *api.Stage) bool { return stage.InApp != nil && !avian.Finished(stage.InApp.Status) })
+	ctx.Set("scanNewChildItems", func(stage *api.Stage) bool {
+		return stage.ScanNewChildItems != nil && !avian.Finished(stage.ScanNewChildItems.Status)
+	})
+	ctx.Set("syncDescendants", func(stage *api.Stage) bool {
+		return stage.SyncDescendants != nil && !avian.Finished(stage.SyncDescendants.Status)
+	})
 
-	//sets the remote adress and scripts directory
+	ctx.Set("stageName", func(stage *api.Stage) string { return avian.Name(stage) })
+	ctx.Set("formatQuotes", func(s string) template.HTML { return template.HTML(s) })
+	ctx.Set("shouldRun", func(stage *api.Stage) bool { return avian.StageState(stage) != avian.StatusFinished })
+
+	// Returns the remote address.
 	ctx.Set("remoteAddress", remoteAddress)
+	// Returns the path to the avian scripts directory.
 	ctx.Set("scriptDir", scriptDir)
+	// Returns the runner.
 	ctx.Set("runner", runner)
 
-	//creates the template
+	// Creates the template.
 	return plush.Render(rubyTemplate, ctx)
 }
