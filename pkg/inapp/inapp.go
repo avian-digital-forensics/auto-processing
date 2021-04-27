@@ -9,11 +9,6 @@ type Settings struct {
 }
 
 func Config(path string, cfg *Settings) error {
-	/*file, err := os.Open(path)
-	if err != nil {
-		return err
-	}*/
-
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
