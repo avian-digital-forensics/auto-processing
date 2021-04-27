@@ -616,15 +616,15 @@ type File struct {
 }
 
 type Settings struct {
-	ArchivedPrefix                     string `json:"archivedPrefix" yaml:"archivedPrefix"`
-	ArchivedTag                        string `json:"archivedTag" yaml:"archivedTag"`
-	ArchivedHasDuplicateTag            string `json:"archivedHasDuplicateTag" yaml:"archivedHasDuplicateTag"`
-	ArchivedMissingDuplicateTag        string `json:"archivedMissingDuplicateTag" yaml:"archivedMissingDuplicateTag"`
-	HasMissingAttachmentsTag           string `json:"hasMissingAttachmentsTag" yaml:"hasMissingAttachmentsTag"`
-	ExcludeArchivedItemsWithDuplicates bool   `json:"excludeArchivedItemsWithDuplicates" yaml:"excludeArchivedItemsWithDuplicates"`
-	MainDirectory                      string `json:"mainDirectory" yaml:"mainDirectory"`
-	MetadataKey                        string `json:"metadataKey" yaml:"metadataKey"`
-	SourcePath                         string `json:"sourcePath" yaml:"sourcePath"`
+	ArchivedPrefix                     string `json:"archived_prefix" yaml:"archived_prefix"`
+	ArchivedTag                        string `json:"archived_tag" yaml:"archived_tag"`
+	ArchivedHasDuplicateTag            string `json:"archived_has_duplicate_tag" yaml:"archived_has_duplicate_tag"`
+	ArchivedMissingDuplicateTag        string `json:"archived_missing_duplicate_tag" yaml:"archived_missing_duplicate_tag"`
+	HasMissingAttachmentsTag           string `json:"has_missing_attachments_tag" yaml:"has_missing_attachments_tag"`
+	ExcludeArchivedItemsWithDuplicates bool   `json:"exclude_archived_items_with_duplicates" yaml:"exclude_archived_items_with_duplicates"`
+	MainDirectory                      string `json:"main_directory" yaml:"main_directory"`
+	MetadataKey                        string `json:"metadata_key" yaml:"metadata_key"`
+	SourcePath                         string `json:"source_path" yaml:"source_path"`
 }
 
 // InApp script as a stage
@@ -712,6 +712,8 @@ type Nms struct {
 	InUse int64 `json:"inUse" yaml:"inUse"`
 	// Licences available at the server
 	Licences []Licence `json:"licences" yaml:"licences"`
+	// Is NMS a CLS relay server
+	IsRelay bool `json:"isRelay" yaml:"isRelay"`
 }
 
 // NmsApplyRequest is the input-object for Apply in the NMS-service
@@ -728,6 +730,8 @@ type NmsApplyRequest struct {
 	Workers int64 `json:"workers" yaml:"workers"`
 	// Licences available at the server
 	Licences []Licences `json:"licences" yaml:"licences"`
+	// Is NMS a CLS relay server
+	IsRelay bool `json:"isRelay" yaml:"isRelay"`
 }
 
 type NmsApplyRequests struct {

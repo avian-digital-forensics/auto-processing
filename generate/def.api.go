@@ -106,6 +106,9 @@ type Nms struct {
 
 	// Licences available at the server
 	Licences []Licence
+
+	// Is NMS a CLS relay server
+	IsRelay bool
 }
 
 // Licence holds information about licences
@@ -168,6 +171,9 @@ type NmsApplyRequest struct {
 
 	// Licences available at the server
 	Licences []Licences
+
+	// Is NMS a CLS relay server
+	IsRelay bool
 }
 
 // NmsApplyResponse is the output-object for

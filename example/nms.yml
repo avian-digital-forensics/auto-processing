@@ -26,6 +26,9 @@ api:
       - address: avian-server1.avian.dk
         port: 27443
 
+        #for CLS relay servers
+        isRelay: true
+
         # Username and pw is not needed for NMS with AD-sync
         # (if the runner starts with an AD-user)
         username: user

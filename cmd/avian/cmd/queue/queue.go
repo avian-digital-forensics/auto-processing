@@ -270,14 +270,20 @@ func (r *run) start() error {
 	var args = []string{
 		"-Xmx" + r.runner.Xmx,
 		fmt.Sprintf("-Dnuix.registry.servers=%s", r.nms.Address),
-		"-licencesourcetype " + "server",
-		"-licencesourcelocation " + fmt.Sprintf("%s:%d", r.nms.Address, r.nms.Port),
 		"-licencetype " + r.runner.Licence,
 		"-licenceworkers " + fmt.Sprintf("%d", r.runner.Workers),
 		"-signout",
 	}
+	// add switches
 	for _, sw := range r.runner.Switches {
 		args = append(args, fmt.Sprintf("%s", sw.Value))
+	}
+	//add correct switches for relay servers as well
+	if r.nms.IsRelay {
+		args = append(args, "-Dnuix.licence.handlers=local-relay-server-local-users")
+		args = append(args, "-licencesourcetype cloud-server")
+	} else {
+		args = append(args, "-licencesourcetype server")
 	}
 
 	// set the generated scripts name in the end of the args
