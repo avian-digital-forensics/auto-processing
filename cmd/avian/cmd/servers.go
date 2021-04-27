@@ -132,7 +132,7 @@ func applyServers(ctx context.Context, path string) error {
 		if err != nil {
 			return err
 		}
-		fmt.Fprintf(os.Stdout, "server: %s has been applied\n", srv.Server.Hostname)
+		fmt.Fprintf(os.Stdout, "server: %s has been applied\n", server.Hostname)
 		count++
 	}
 
