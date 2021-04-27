@@ -19,6 +19,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/avian-digital-forensics/auto-processing/configs"
 	"github.com/avian-digital-forensics/auto-processing/pkg/avian-client"
@@ -78,7 +79,7 @@ var runnerStagesCmd = &cobra.Command{
 	Short: "List the stages for the specified runner (specified by name)",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := stagesRunner(context.Background(), args[0]); err != nil {
+		if err := stagesRunner(context.Background(), strings.ToLower(args[0])); err != nil {
 			fmt.Fprintf(os.Stderr, "could not get stages for runner from backend: %v\n", err)
 		}
 	},
@@ -92,7 +93,7 @@ var runnerDeleteCmd = &cobra.Command{
 	Short: "List the stages for the specified runner (specified by name)",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := deleteRunner(context.Background(), args[0]); err != nil {
+		if err := deleteRunner(context.Background(), strings.ToLower(args[0])); err != nil {
 			fmt.Fprintf(os.Stderr, "could not delete runner from backend: %v\n", err)
 		}
 	},
@@ -107,7 +108,7 @@ var runnerScriptCmd = &cobra.Command{
 	Short: "Returns the script for the specified runner (specified by name)",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := scriptRunner(context.Background(), args[0]); err != nil {
+		if err := scriptRunner(context.Background(), strings.ToLower(args[0])); err != nil {
 			fmt.Fprintf(os.Stderr, "could not get the script for runner from backend: %v\n", err)
 		}
 	},
@@ -163,12 +164,12 @@ func applyRunner(ctx context.Context, path string) error {
 		return fmt.Errorf("Couldn't parse yml-file %s : %v", path, err)
 	}
 
-	// Validate and set the settings for the case that will
-	// be created
-	runner, err := configs.SetCaseSettings(cfg.API.Runner)
+	// Validate and post-process runner config.
+	err = configs.ValidateRunnerConfig(cfg.API.Runner)
 	if err != nil {
 		return err
 	}
+	runner := configs.PostprocessRunnerConfig(cfg.API.Runner)
 
 	// Create the request
 	runner.Update = forceApply // if the runner should be updated (-f argument was used for the command)
