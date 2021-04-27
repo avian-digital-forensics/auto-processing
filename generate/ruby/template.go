@@ -585,13 +585,10 @@ begin
   read_settings = YAML.load(settings_file)
   settings = {}
   for key,value in read_settings 
-    puts("klumpfisk: #{key.to_s}=#{value.to_s}")
     case key
       when Symbol
-        puts('aborre: ' + key.to_sym.to_s)
         settings[key] = value
       else
-        puts('gedde: ' + key.to_sym.to_s)
         settings[key.to_sym] = value
     end
   end
