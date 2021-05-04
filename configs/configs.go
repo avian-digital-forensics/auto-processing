@@ -114,6 +114,7 @@ func ValidateServerConfig(server avian.ServerApplyRequest) error {
 // Performs necessary post-processing for server configs.
 // For example sets the hostname to lower case.
 func PostprocessServerConfig(server avian.ServerApplyRequest) avian.ServerApplyRequest {
+	// Set hostname to lowercase to avoid case sensitivity.
 	server.Hostname = strings.ToLower(server.Hostname)
 
 	return server
