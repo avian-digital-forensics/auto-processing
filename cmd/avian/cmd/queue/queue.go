@@ -269,7 +269,8 @@ func (r *run) start() error {
 	// format switches for powershell
 	var args = []string{
 		"-Xmx" + r.runner.Xmx,
-		fmt.Sprintf("-Dnuix.registry.servers=%s", r.nms.Address),
+		"-licencesourcelocation " + fmt.Sprintf("%s:%d", r.nms.Address, r.nms.Port),
+		"-Dnuix.registry.servers=" + fmt.Sprintf("%s:%d", r.nms.Address, r.nms.Port),
 		"-licencetype " + r.runner.Licence,
 		"-licenceworkers " + fmt.Sprintf("%d", r.runner.Workers),
 		"-signout",
@@ -281,7 +282,7 @@ func (r *run) start() error {
 	// Add correct switches for relay servers as well.
 	if r.nms.IsRelay {
 		args = append(args, "-Dnuix.licence.handlers=local-relay-server-local-users")
-		args = append(args, "-licencesourcetype cloud-server")
+		//args = append(args, "-licencesourcetype cloud-server")
 	} else {
 		args = append(args, "-licencesourcetype server")
 	}
@@ -294,6 +295,7 @@ func (r *run) start() error {
 		logger.Error("Failed to set location", zap.String("exception", err.Error()))
 		return fmt.Errorf("Failed to set location: %v", err)
 	}
+	//log powershell arguments to service log
 	logger.Info("Running powershell command.", zap.String("args", strings.Join(args, " ")))
 	return session.Run("nuix_console.exe", args...)
 }

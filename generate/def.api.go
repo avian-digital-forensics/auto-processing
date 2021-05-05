@@ -13,39 +13,39 @@ type ServerService interface {
 	List(ServerListRequest) ServerListResponse
 }
 
-// Server is the main-struct for the
-// servers
+// Server is the main struct for the
+// servers.
 type Server struct {
 	// Base for the datastore
 	datastore.Base
 
-	// Hostname of the server
+	// Hostname of the server.
 	Hostname string
 
-	// Port for the server
+	// Port for the server.
 	Port int64
 
-	// OperatingSystem the server is running
+	// OperatingSystem the server is running.
 	OperatingSystem string
 
-	// Username for connection to the server
+	// Username for connection to the server.
 	Username string
 
-	// Password for connection to the server
+	// Password for connection to the server.
 	Password string
 
-	// NuixPath to know where to run Nuix
+	// NuixPath to know where to run Nuix.
 	NuixPath string
 
-	// AvianScripts path to the avian-scripts
+	// AvianScripts path to the avian-scripts.
 	AvianScripts string
 
-	// Active - if the server has an active job
+	// Active - if the server has an active job.
 	Active bool
 }
 
 // ServerApplyRequest is the input-object
-// for Apply in the server-service
+// for Apply in the server-service.
 type ServerApplyRequest struct {
 	Hostname        string
 	Port            int64
@@ -57,91 +57,91 @@ type ServerApplyRequest struct {
 }
 
 // ServerApplyResponse is the output-object
-// for Apply in the server-service
+// for Apply in the server-service.
 type ServerApplyResponse struct {
 	Server Server
 }
 
 // ServerListRequest is the input-object
-// for List in the server-service
+// for List in the server-service.
 type ServerListRequest struct{}
 
 // ServerListResponse is the output-object
-// for List in the server-service
+// for List in the server-service.
 type ServerListResponse struct {
 	Servers []Server
 }
 
-// NmsService handles the Nuix Management Servers
+// NmsService handles the Nuix Management Servers.
 type NmsService interface {
 	Apply(NmsApplyRequests) NmsApplyResponse
 	List(NmsListRequest) NmsListResponse
 	ListLicences(NmsListLicencesRequest) NmsListLicencesResponse
 }
 
-// Nms is the main struct for the Nuix Management Servers
+// Nms is the main struct for the Nuix Management Servers.
 type Nms struct {
-	// Base for the datastore
+	// Base for the datastore.
 	datastore.Base
 
 	// Address of the nms-server
-	// for example: license.avian.dk
+	// for example: license.avian.dk.
 	Address string
 
-	// Port for the nms-server
+	// Port for the nms-server.
 	Port int64
 
-	// Username for the nms-server
+	// Username for the nms-server.
 	Username string
 
-	// Password for the nms-server
+	// Password for the nms-server.
 	Password string
 
-	// amount of workers licensed
-	// to the server
+	// Amount of workers licensed
+	// to the server.
 	Workers int64
 
-	// Amount of workers in use
+	// Amount of workers in use.
 	InUse int64
 
-	// Licences available at the server
+	// Licences available at the server.
 	Licences []Licence
 
-	// Is NMS a CLS relay server
+	// Is NMS a CLS relay server.
 	IsRelay bool
 }
 
 // Licence holds information about licences
-// in Nuix Management Server
+// in Nuix Management Server.
 type Licence struct {
-	// Base for the datastore
+	// Base for the datastore.
 	datastore.Base
 
-	// Foreign-key for the NMS-server
+	// Foreign-key for the NMS-server.
 	NmsID uint
 
-	// Type of licence
+	// Type of licence.
 	Type string
 
-	// Amount of licences for this type
+	// Amount of licences for this type.
 	Amount int64
 
-	// Amount of licenses in use for this type
+	// Amount of licenses in use for this type.
 	InUse int64
 }
 
-// Licences is a holder for Licence
+// Licences is a holder for Licence.
 type Licences struct {
 	Licence LicenceApplyRequest
 }
 
 // LicenceApplyRequest is the input-object for
-// applying NMS-licence
+// applying NMS-licence.
 type LicenceApplyRequest struct {
-	// Type of licence
+	// Type of licence.
 	Type string
 
-	// Amount of licences for this type
+	// Amount of licences for this type.
 	Amount int64
 }
 
@@ -150,68 +150,68 @@ type NmsApplyRequests struct {
 }
 
 // NmsApplyRequest is the input-object for
-// Apply in the NMS-service
+// Apply in the NMS-service.
 type NmsApplyRequest struct {
 	// Address of the nms-server
-	// for example: license.avian.dk
+	// for example: license.avian.dk.
 	Address string
 
-	// Port for the nms-server
+	// Port for the nms-server.
 	Port int64
 
-	// Username for the nms-server
+	// Username for the nms-server.
 	Username string
 
-	// Password for the nms-server
+	// Password for the nms-server.
 	Password string
 
-	// amount of workers licensed
-	// to the server
+	// Amount of workers licensed
+	// to the nms-server.
 	Workers int64
 
-	// Licences available at the server
+	// Licences available at the nms-server.
 	Licences []Licences
 
-	// Is NMS a CLS relay server
+	// Whether the NMS is a CLS relay server.
 	IsRelay bool
 }
 
 // NmsApplyResponse is the output-object for
-// Apply in the NMS-service
+// Apply in the NMS-service.
 type NmsApplyResponse struct {
 	Nms []Nms
 }
 
 // NmsListRequest is the input-object for
-// List in the NMS-service
+// List in the NMS-service.
 type NmsListRequest struct{}
 
 // NmsListResponse is the output-object for
-// List in the NMS-service
+// List in the NMS-service.
 type NmsListResponse struct {
 	Nms []Nms
 }
 
 // NmsListLicencesRequest is the input-object for
-// listing licences for a specific NMS
+// listing licences for a specific NMS.
 type NmsListLicencesRequest struct {
 	// ID for the nms-server
-	// to list the licences for
+	// to list the licences for.
 	NmsID uint
 }
 
 // NmsListLicencesResponse is the output-object for
-// listing licences for a specific NMS
+// listing licences for a specific NMS.
 type NmsListLicencesResponse struct {
 	Licences []Licence
 }
 
-// RunnerService handles all the runners
+// RunnerService handles all the runners.
 type RunnerService interface {
-	// Apply applies the configuration to the backend
+	// Apply applies the configuration to the backend.
 	Apply(RunnerApplyRequest) RunnerApplyResponse
 
-	// List returns the runners from the backend
+	// List returns the runners from the backend.
 	List(RunnerListRequest) RunnerListResponse
 
 	// Get returns the requested Runner

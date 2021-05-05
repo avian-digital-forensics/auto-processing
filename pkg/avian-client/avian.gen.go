@@ -48,7 +48,7 @@ func New(remoteHost, secret string) *Client {
 	}
 }
 
-// NmsService handles the Nuix Management Servers
+// NmsService handles the Nuix Management Servers.
 type NmsService struct {
 	client *Client
 }
@@ -222,7 +222,7 @@ func (s *NmsService) ListLicences(ctx context.Context, r NmsListLicencesRequest)
 	return &response.NmsListLicencesResponse, nil
 }
 
-// RunnerService handles all the runners
+// RunnerService handles all the runners.
 type RunnerService struct {
 	client *Client
 }
@@ -234,7 +234,7 @@ func NewRunnerService(client *Client) *RunnerService {
 	}
 }
 
-// Apply applies the configuration to the backend
+// Apply applies the configuration to the backend.
 func (s *RunnerService) Apply(ctx context.Context, r RunnerApplyRequest) (*RunnerApplyResponse, error) {
 	requestBodyBytes, err := json.Marshal(r)
 	if err != nil {
@@ -674,7 +674,7 @@ func (s *RunnerService) Heartbeat(ctx context.Context, r RunnerStartRequest) (*R
 	return &response.RunnerStartResponse, nil
 }
 
-// List returns the runners from the backend
+// List returns the runners from the backend.
 func (s *RunnerService) List(ctx context.Context, r RunnerListRequest) (*RunnerListResponse, error) {
 	requestBodyBytes, err := json.Marshal(r)
 	if err != nil {
@@ -1422,34 +1422,34 @@ type InApp struct {
 	Status int64 `json:"status" yaml:"status"`
 }
 
-// Licence holds information about licences in Nuix Management Server
+// Licence holds information about licences in Nuix Management Server.
 type Licence struct {
 	datastore.Base
 
-	// Foreign-key for the NMS-server
+	// Foreign-key for the NMS-server.
 	NmsID uint `json:"nmsID" yaml:"nmsID"`
 
-	// Type of licence
+	// Type of licence.
 	Type string `json:"type" yaml:"type"`
 
-	// Amount of licences for this type
+	// Amount of licences for this type.
 	Amount int64 `json:"amount" yaml:"amount"`
 
-	// Amount of licenses in use for this type
+	// Amount of licenses in use for this type.
 	InUse int64 `json:"inUse" yaml:"inUse"`
 }
 
-// LicenceApplyRequest is the input-object for applying NMS-licence
+// LicenceApplyRequest is the input-object for applying NMS-licence.
 type LicenceApplyRequest struct {
 
-	// Type of licence
+	// Type of licence.
 	Type string `json:"type" yaml:"type"`
 
-	// Amount of licences for this type
+	// Amount of licences for this type.
 	Amount int64 `json:"amount" yaml:"amount"`
 }
 
-// Licences is a holder for Licence
+// Licences is a holder for Licence.
 type Licences struct {
 	Licence LicenceApplyRequest `json:"licence" yaml:"licence"`
 }
@@ -1493,57 +1493,57 @@ type LogRequest struct {
 type LogResponse struct {
 }
 
-// Nms is the main struct for the Nuix Management Servers
+// Nms is the main struct for the Nuix Management Servers.
 type Nms struct {
 	datastore.Base
 
 	// Address of the nms-server
 	Address string `json:"address" yaml:"address"`
 
-	// Port for the nms-server
+	// Port for the nms-server.
 	Port int64 `json:"port" yaml:"port"`
 
-	// Username for the nms-server
+	// Username for the nms-server.
 	Username string `json:"username" yaml:"username"`
 
-	// Password for the nms-server
+	// Password for the nms-server.
 	Password string `json:"password" yaml:"password"`
 
-	// amount of workers licensed to the server
+	// Amount of workers licensed to the server.
 	Workers int64 `json:"workers" yaml:"workers"`
 
-	// Amount of workers in use
+	// Amount of workers in use.
 	InUse int64 `json:"inUse" yaml:"inUse"`
 
-	// Licences available at the server
+	// Licences available at the server.
 	Licences []Licence `json:"licences" yaml:"licences"`
 
-	// Is NMS a CLS relay server
+	// Is NMS a CLS relay server.
 	IsRelay bool `json:"isRelay" yaml:"isRelay"`
 }
 
-// NmsApplyRequest is the input-object for Apply in the NMS-service
+// NmsApplyRequest is the input-object for Apply in the NMS-service.
 type NmsApplyRequest struct {
 
 	// Address of the nms-server
 	Address string `json:"address" yaml:"address"`
 
-	// Port for the nms-server
+	// Port for the nms-server.
 	Port int64 `json:"port" yaml:"port"`
 
-	// Username for the nms-server
+	// Username for the nms-server.
 	Username string `json:"username" yaml:"username"`
 
-	// Password for the nms-server
+	// Password for the nms-server.
 	Password string `json:"password" yaml:"password"`
 
-	// amount of workers licensed to the server
+	// Amount of workers licensed to the nms-server.
 	Workers int64 `json:"workers" yaml:"workers"`
 
-	// Licences available at the server
+	// Licences available at the nms-server.
 	Licences []Licences `json:"licences" yaml:"licences"`
 
-	// Is NMS a CLS relay server
+	// Whether the NMS is a CLS relay server.
 	IsRelay bool `json:"isRelay" yaml:"isRelay"`
 }
 
@@ -1551,30 +1551,30 @@ type NmsApplyRequests struct {
 	Nms []NmsApplyRequest `json:"nms" yaml:"nms"`
 }
 
-// NmsApplyResponse is the output-object for Apply in the NMS-service
+// NmsApplyResponse is the output-object for Apply in the NMS-service.
 type NmsApplyResponse struct {
 	Nms []Nms `json:"nms" yaml:"nms"`
 }
 
 // NmsListLicencesRequest is the input-object for listing licences for a specific
-// NMS
+// NMS.
 type NmsListLicencesRequest struct {
 
-	// ID for the nms-server to list the licences for
+	// ID for the nms-server to list the licences for.
 	NmsID uint `json:"nmsID" yaml:"nmsID"`
 }
 
 // NmsListLicencesResponse is the output-object for listing licences for a specific
-// NMS
+// NMS.
 type NmsListLicencesResponse struct {
 	Licences []Licence `json:"licences" yaml:"licences"`
 }
 
-// NmsListRequest is the input-object for List in the NMS-service
+// NmsListRequest is the input-object for List in the NMS-service.
 type NmsListRequest struct {
 }
 
-// NmsListResponse is the output-object for List in the NMS-service
+// NmsListResponse is the output-object for List in the NMS-service.
 type NmsListResponse struct {
 	Nms []Nms `json:"nms" yaml:"nms"`
 }
@@ -1929,36 +1929,36 @@ type SearchAndTag struct {
 	Status int64 `json:"status" yaml:"status"`
 }
 
-// Server is the main-struct for the servers
+// Server is the main struct for the servers.
 type Server struct {
 	datastore.Base
 
-	// Hostname of the server
+	// Hostname of the server.
 	Hostname string `json:"hostname" yaml:"hostname"`
 
-	// Port for the server
+	// Port for the server.
 	Port int64 `json:"port" yaml:"port"`
 
-	// OperatingSystem the server is running
+	// OperatingSystem the server is running.
 	OperatingSystem string `json:"operatingSystem" yaml:"operatingSystem"`
 
-	// Username for connection to the server
+	// Username for connection to the server.
 	Username string `json:"username" yaml:"username"`
 
-	// Password for connection to the server
+	// Password for connection to the server.
 	Password string `json:"password" yaml:"password"`
 
-	// NuixPath to know where to run Nuix
+	// NuixPath to know where to run Nuix.
 	NuixPath string `json:"nuixPath" yaml:"nuixPath"`
 
-	// AvianScripts path to the avian-scripts
+	// AvianScripts path to the avian-scripts.
 	AvianScripts string `json:"avianScripts" yaml:"avianScripts"`
 
-	// Active - if the server has an active job
+	// Active - if the server has an active job.
 	Active bool `json:"active" yaml:"active"`
 }
 
-// ServerApplyRequest is the input-object for Apply in the server-service
+// ServerApplyRequest is the input-object for Apply in the server-service.
 type ServerApplyRequest struct {
 	Hostname string `json:"hostname" yaml:"hostname"`
 
@@ -1975,16 +1975,16 @@ type ServerApplyRequest struct {
 	AvianScripts string `json:"avianScripts" yaml:"avianScripts"`
 }
 
-// ServerApplyResponse is the output-object for Apply in the server-service
+// ServerApplyResponse is the output-object for Apply in the server-service.
 type ServerApplyResponse struct {
 	Server Server `json:"server" yaml:"server"`
 }
 
-// ServerListRequest is the input-object for List in the server-service
+// ServerListRequest is the input-object for List in the server-service.
 type ServerListRequest struct {
 }
 
-// ServerListResponse is the output-object for List in the server-service
+// ServerListResponse is the output-object for List in the server-service.
 type ServerListResponse struct {
 	Servers []Server `json:"servers" yaml:"servers"`
 }
