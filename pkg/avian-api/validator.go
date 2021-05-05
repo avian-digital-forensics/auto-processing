@@ -130,6 +130,16 @@ func (s *Stage) Validate() error {
 			if emptyString(evidence.Directory) {
 				return fmt.Errorf("must specify directory for evidence: #%d", i)
 			}
+			if !emptyString(evidence.Locale) {
+				// Validate locale somewhat according to https://tools.ietf.org/html/rfc5646#section-2.1.1.
+				matchRegex, err := regexp.MatchString("^(?:[a-zA-Z0-9]{1,8}-)[a-zA-Z0-9]{1,8}$", evidence.Locale)
+				if err != nil {
+					panic("Invalid regex in code.")
+				}
+				if !matchRegex {
+					return fmt.Errorf("Invalid value for locale: %s. Must be alphanumeric with segments of maximum 8 length seperated by hyphens.", evidence.Locale)
+				}
+			}
 		}
 	}
 
