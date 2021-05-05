@@ -119,8 +119,15 @@ func applyNms(ctx context.Context, path string) error {
 		return fmt.Errorf("Couldn't parse yml-file %s : %v", path, err)
 	}
 
+	// Validate and post-process server config.
+	err = configs.ValidateNmsConfigs(cfg.API.Nms)
+	if err != nil {
+		return err
+	}
+	nmsList := configs.PostprocessNmsConfigs(cfg.API.Nms)
+
 	// send the request to the service
-	resp, err := nmsService.Apply(ctx, cfg.API.Nms)
+	resp, err := nmsService.Apply(ctx, nmsList)
 	if err != nil {
 		return err
 	}

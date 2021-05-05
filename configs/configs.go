@@ -28,12 +28,40 @@ type Servers struct {
 	Server avian.ServerApplyRequest `yaml:"server"`
 }
 
-func ValidateRunnerConfig(r avian.RunnerApplyRequest) error {
-	if r.CaseSettings == nil {
+// Validates the NMS config.
+// Returns an error if any are found or nil if the config is valid.
+func ValidateNmsConfigs(nmsList avian.NmsApplyRequests) error {
+	return nil
+}
+
+// Performs necessary post-processing for NMS configs.
+func PostprocessNmsConfigs(nmsList avian.NmsApplyRequests) avian.NmsApplyRequests {
+
+	return nmsList
+}
+
+// Validates the server config.
+// Returns an error if any are found or nil if the config is valid.
+func ValidateServerConfig(server avian.ServerApplyRequest) error {
+	return nil
+}
+
+// Performs necessary post-processing for server configs.
+// For example sets the hostname to lower case.
+func PostprocessServerConfig(server avian.ServerApplyRequest) avian.ServerApplyRequest {
+	server.Hostname = strings.ToLower(server.Hostname)
+
+	return server
+}
+
+// Validates the runner config.
+// Returns an error if any are found or nil if the config is valid.
+func ValidateRunnerConfig(runner avian.RunnerApplyRequest) error {
+	if runner.CaseSettings == nil {
 		return errors.New("specify caseSettings and caseLocation")
 	}
 
-	if r.CaseSettings.CaseLocation == "" {
+	if runner.CaseSettings.CaseLocation == "" {
 		return errors.New("must specify caseLocation for caseSettings")
 	}
 	return nil
@@ -100,7 +128,7 @@ func PostprocessRunnerConfig(r avian.RunnerApplyRequest) avian.RunnerApplyReques
 	return r
 }
 
-// decodes and reads the yaml
+// Decodes and reads the yaml.
 func readYAML(path string, cfg *Config) error {
 	file, err := os.Open(path)
 	if err != nil {
