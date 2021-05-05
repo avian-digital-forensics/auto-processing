@@ -257,6 +257,25 @@ func (r *Runner) Paths() []string {
 			paths = append(paths, stage.InApp.Config)
 		}
 	}
+
+	pathSwitches := []string{
+		"-Dnuix.logdir=",
+		"-java.io.tmpdir=",
+		"-Dnuix.worker.tmpdir=",
+		"-javaagent:",
+		"-Dnuix.processing.sharedTempDirectory=",
+		"-Dnuix.worker.jvm.arguments=-javaagent:",
+	}
+
+	if r.Switches != nil {
+		for _, cmdSwitch := range r.Switches {
+			for _, path := range pathSwitches {
+				if strings.HasPrefix(cmdSwitch.Value, path) {
+					paths = append(paths, strings.TrimPrefix(cmdSwitch.Value, path))
+				}
+			}
+		}
+	}
 	return paths
 }
 
