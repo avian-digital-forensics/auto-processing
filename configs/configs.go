@@ -65,6 +65,7 @@ func PostprocessServerConfig(server avian.ServerApplyRequest) avian.ServerApplyR
 
 // Validates the runner config.
 // Returns an error if any are found or nil if the config is valid.
+// Most validation of runner should happen in validator.go instead.
 func ValidateRunnerConfig(runner avian.RunnerApplyRequest) error {
 	// Validate Xmx.
 	matchRegex, err := regexp.MatchString("^[0-9]+[kKmMgG]$", runner.Xmx)
