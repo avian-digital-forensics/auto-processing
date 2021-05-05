@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/avian-digital-forensics/auto-processing/pkg/inapp"
@@ -12,53 +13,72 @@ const (
 	workerTempDirLength int = 45
 )
 
-func (r *Runner) Validate() error {
-	if emptyString(r.Name) {
+func (runner *Runner) Validate() error {
+	if emptyString(runner.Name) {
 		return errors.New("must specify unique name for runner")
 	}
 
-	if emptyString(r.Hostname) {
+	if emptyString(runner.Hostname) {
 		return errors.New("must specify 'hostname' for server to run the runner")
 	}
 
-	if emptyString(r.Nms) {
+	if emptyString(runner.Nms) {
 		return errors.New("must specify 'nms' for licencesource")
 	}
 
-	if emptyString(r.Licence) {
+	if emptyString(runner.Licence) {
 		return errors.New("must specify 'licence' for the correct licence-type")
 	}
 
-	if emptyString(r.Xmx) {
+	if emptyString(runner.Xmx) {
 		return errors.New("must specify 'xmx' for memory allocation in jvm")
 	}
 
-	if r.Workers == 0 {
+	// Validate Xmx.
+	matchRegex, err := regexp.MatchString("^[0-9]+[kKmMgG]$", runner.Xmx)
+	if err != nil {
+		panic("Invalid regex in code.")
+	}
+	if !matchRegex {
+		return fmt.Errorf("Invalid value for Xmx: %s. Must be a positive integer followed by k,K,m,M,g, or G.", runner.Xmx)
+	}
+
+	if runner.Workers == 0 {
 		return errors.New("must specify amount of workers")
 	}
 
-	if err := r.CaseSettings.Validate(); err != nil {
+	if err := runner.CaseSettings.Validate(); err != nil {
 		return err
 	}
 
-	for i, stage := range r.Stages {
+	hasProcessingStage := false
+
+	for i, stage := range runner.Stages {
 		if err := stage.Validate(); err != nil {
 			return err
 		}
 		if stage.Nil() {
 			return fmt.Errorf("Stage: %d - unable to parse what stage it is - check syntax", i+1)
 		}
+		// Ensure that the runner only has a single processing stage.
+		if stage.Process != nil {
+			if hasProcessingStage {
+				return fmt.Errorf("A runner may only have a single processing stage.")
+			} else {
+				hasProcessingStage = true
+			}
+		}
 
 		// Check if Ocr or Populate is provided - case directory or spoolDir needs to be
 		// less than 45 characters or else the processing will fail
 		if stage.Ocr != nil || stage.Populate != nil {
 			// Check if the case-directory has more than 45 characters
-			if len(r.CaseSettings.Case.Directory) > workerTempDirLength {
+			if len(runner.CaseSettings.Case.Directory) > workerTempDirLength {
 				spoolDirOK := false
 				// iterate through the switches to see
 				// if the spoolDir is provided
 				spoolDirSwitch := "-Dnuix.export.spoolDir="
-				for _, s := range r.Switches {
+				for _, s := range runner.Switches {
 					if strings.HasPrefix(s.Value, spoolDirSwitch) {
 						spoolDir := strings.TrimPrefix(s.Value, spoolDirSwitch)
 						// set spoolDirOK to true if the spoolDir has less than 45 characters
