@@ -31,12 +31,13 @@ type Servers struct {
 // Validates the NMS config.
 // Returns an error if any are found or nil if the config is valid.
 func ValidateNmsConfigs(nmsList avian.NmsApplyRequests) error {
+	// Must loop through all NMS's here because of the different structure of NMS's in config.
 	for _, nms := range nmsList.Nms {
 		// Ensure valid port.
 		if nms.Port == 0 {
 			return errors.New("Port either not specified or set to 0. Neither is permitted.")
 		} else if nms.Port > 65535 {
-			return errors.New(fmt.Sprintf("Invalid port value %d. Port must not be higher than 65535", nms.Port))
+			return fmt.Errorf("Invalid port value %d. Port must not be higher than 65535", nms.Port)
 		}
 	}
 	return nil
@@ -44,7 +45,6 @@ func ValidateNmsConfigs(nmsList avian.NmsApplyRequests) error {
 
 // Performs necessary post-processing for NMS configs.
 func PostprocessNmsConfigs(nmsList avian.NmsApplyRequests) avian.NmsApplyRequests {
-
 	return nmsList
 }
 
