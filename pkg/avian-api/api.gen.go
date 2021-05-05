@@ -10,11 +10,11 @@ import (
 
 	"github.com/pacedotdev/oto/otohttp"
 
-	datastore "github.com/avian-digital-forensics/auto-processing/pkg/datastore"
-
 	inapp "github.com/avian-digital-forensics/auto-processing/pkg/inapp"
 
 	time "time"
+
+	datastore "github.com/avian-digital-forensics/auto-processing/pkg/datastore"
 )
 
 // NmsService handles the Nuix Management Servers
