@@ -82,7 +82,7 @@ func (s ServerService) Apply(ctx context.Context, r api.ServerApplyRequest) (*ap
 	if newSrv.NuixPath != r.NuixPath {
 		if err := session.CheckPath(r.NuixPath); err != nil {
 			logger.Error("Failed to test NuixPath for server", zap.String("exception", err.Error()))
-			return nil, fmt.Errorf("failed to test nuix-path for server: %v", err)
+			return nil, fmt.Errorf("failed to test NuixPath for server: %v", err)
 		}
 		logger.Debug("Nuix-path is ok for server")
 	}
@@ -90,7 +90,7 @@ func (s ServerService) Apply(ctx context.Context, r api.ServerApplyRequest) (*ap
 	if newSrv.AvianScripts != r.AvianScripts {
 		if err := session.CheckPath(r.AvianScripts); err != nil {
 			logger.Error("Failed to test AvianScripts-path for server", zap.String("exception", err.Error()))
-			return nil, fmt.Errorf("failed to test nuix-path for server: %v", err)
+			return nil, fmt.Errorf("failed to test avian-scripts-path for server: %v", err)
 		}
 
 		logger.Debug("Avian-scripts path is ok for server")
