@@ -67,6 +67,8 @@ func ValidateRunnerConfig(runner avian.RunnerApplyRequest) error {
 	return nil
 }
 
+// Performs necessary post-processing for runner configs.
+// For example sets the name to lower case.
 func PostprocessRunnerConfig(r avian.RunnerApplyRequest) avian.RunnerApplyRequest {
 	if r.CaseSettings.Case == nil {
 		r.CaseSettings.Case = &avian.Case{}
