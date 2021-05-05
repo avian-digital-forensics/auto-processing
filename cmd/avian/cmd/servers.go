@@ -106,24 +106,33 @@ func init() {
 }
 
 // applyServers will apply the servers from the config-file
-// to the service
+// to the service.
 func applyServers(ctx context.Context, path string) error {
-	// get the config with the servers info
+	// Get the config with the servers' info.
 	cfg, err := configs.Get(path)
 	if err != nil {
 		return fmt.Errorf("Couldn't parse yml-file %s : %v", path, err)
 	}
 
-	// output that the service is testing connections to the applied servers
+	// Output that the service is testing connections to the applied servers.
 	fmt.Fprintf(os.Stdout, "INFO : Testing connection to servers\nPlease wait...\n")
 
 	var count int
 	for _, srv := range cfg.API.Servers {
-		_, err := srvService.Apply(ctx, srv.Server)
+
+		// Validate and post-process server config.
+		err = configs.ValidateServerConfig(srv.Server)
 		if err != nil {
 			return err
 		}
-		fmt.Fprintf(os.Stdout, "server: %s has been applied\n", srv.Server.Hostname)
+		server := configs.PostprocessServerConfig(srv.Server)
+
+		// Apply server.
+		_, err := srvService.Apply(ctx, server)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(os.Stdout, "server: %s has been applied\n", server.Hostname)
 		count++
 	}
 

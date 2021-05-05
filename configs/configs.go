@@ -11,19 +11,19 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// defines the yaml config
+// Defines the yaml config.
 type Config struct {
 	API API `yaml:"api"`
 }
 
-// defines the api
+// Defines the api.
 type API struct {
 	Servers []Servers                `yaml:"servers"`
 	Nms     avian.NmsApplyRequests   `yaml:"nmsApply"`
 	Runner  avian.RunnerApplyRequest `yaml:"runner"`
 }
 
-// defines the servers config
+// Defines the servers config.
 type Servers struct {
 	Server avian.ServerApplyRequest `yaml:"server"`
 }
@@ -76,66 +76,67 @@ func ValidateRunnerConfig(runner avian.RunnerApplyRequest) error {
 }
 
 // Performs necessary post-processing for runner configs.
-// For example sets the name to lower case.
-func PostprocessRunnerConfig(r avian.RunnerApplyRequest) avian.RunnerApplyRequest {
-	if r.CaseSettings.Case == nil {
-		r.CaseSettings.Case = &avian.Case{}
+// For example sets case names based on runner name and therafter lowercases the runner name.
+func PostprocessRunnerConfig(runner avian.RunnerApplyRequest) avian.RunnerApplyRequest {
+	if runner.CaseSettings.Case == nil {
+		runner.CaseSettings.Case = &avian.Case{}
 	}
 
-	if r.CaseSettings.Case.Name == "" {
-		r.CaseSettings.Case.Name = r.Name + "-single"
+	if runner.CaseSettings.Case.Name == "" {
+		runner.CaseSettings.Case.Name = runner.Name + "-single"
 	}
 
-	if r.CaseSettings.Case.Directory == "" {
-		r.CaseSettings.Case.Directory = fmt.Sprintf("%s/%s-single",
-			r.CaseSettings.CaseLocation,
-			r.Name,
+	if runner.CaseSettings.Case.Directory == "" {
+		runner.CaseSettings.Case.Directory = fmt.Sprintf("%s/%s-single",
+			runner.CaseSettings.CaseLocation,
+			runner.Name,
 		)
 	}
 
-	//checks if compound case has been set
-	if r.CaseSettings.CompoundCase == nil || r.CaseSettings.CompoundCase.Directory == "" {
+	// Checks if compound case has been set.
+	if runner.CaseSettings.CompoundCase == nil || runner.CaseSettings.CompoundCase.Directory == "" {
 		var compound_description string
 		var compound_investigator string
-		if r.CaseSettings.CompoundCase != nil {
-			compound_description = r.CaseSettings.ReviewCompound.Description
-			compound_investigator = r.CaseSettings.ReviewCompound.Investigator
+		if runner.CaseSettings.CompoundCase != nil {
+			compound_description = runner.CaseSettings.ReviewCompound.Description
+			compound_investigator = runner.CaseSettings.ReviewCompound.Investigator
 		}
 
-		r.CaseSettings.CompoundCase = &avian.Case{
-			Name: r.Name + "-compound",
+		runner.CaseSettings.CompoundCase = &avian.Case{
+			Name: runner.Name + "-compound",
 			Directory: fmt.Sprintf("%s/%s-compound",
-				r.CaseSettings.CaseLocation,
-				r.Name,
+				runner.CaseSettings.CaseLocation,
+				runner.Name,
 			),
 			Description:  compound_description,
 			Investigator: compound_investigator,
 		}
 	}
 
-	//checks if review case has been set
-	if r.CaseSettings.ReviewCompound == nil || r.CaseSettings.ReviewCompound.Directory == "" {
+	// Checks if review case has been set.
+	if runner.CaseSettings.ReviewCompound == nil || runner.CaseSettings.ReviewCompound.Directory == "" {
 		var review_description string
 		var review_investigator string
-		if r.CaseSettings.ReviewCompound != nil {
-			review_description = r.CaseSettings.ReviewCompound.Description
-			review_investigator = r.CaseSettings.ReviewCompound.Investigator
+		if runner.CaseSettings.ReviewCompound != nil {
+			review_description = runner.CaseSettings.ReviewCompound.Description
+			review_investigator = runner.CaseSettings.ReviewCompound.Investigator
 		}
 
-		r.CaseSettings.ReviewCompound = &avian.Case{
-			Name: r.Name + "-review",
+		runner.CaseSettings.ReviewCompound = &avian.Case{
+			Name: runner.Name + "-review",
 			Directory: fmt.Sprintf("%s/%s-review",
-				r.CaseSettings.CaseLocation,
-				r.Name,
+				runner.CaseSettings.CaseLocation,
+				runner.Name,
 			),
 			Description:  review_description,
 			Investigator: review_investigator,
 		}
 	}
 
-	r.Name = strings.ToLower(r.Name)
+	runner.Name = strings.ToLower(runner.Name)
+	runner.Hostname = strings.ToLower(runner.Hostname)
 
-	return r
+	return runner
 }
 
 // Decodes and reads the yaml.
@@ -149,7 +150,7 @@ func readYAML(path string, cfg *Config) error {
 	return decoder.Decode(cfg)
 }
 
-// Get returns data from yml file specified as path
+// Get returns data from yml file specified as path.
 func Get(path string) (*Config, error) {
 	var cfg Config
 	err := readYAML(path, &cfg)
