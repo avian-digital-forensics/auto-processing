@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 
 	avian "github.com/avian-digital-forensics/auto-processing/pkg/avian-client"
@@ -65,6 +66,15 @@ func PostprocessServerConfig(server avian.ServerApplyRequest) avian.ServerApplyR
 // Validates the runner config.
 // Returns an error if any are found or nil if the config is valid.
 func ValidateRunnerConfig(runner avian.RunnerApplyRequest) error {
+	// Validate Xmx.
+	matchRegex, err := regexp.MatchString("^[0-9]+[kKmMgG]$", runner.Xmx)
+	if err != nil {
+		panic("Invalid regex in code.")
+	}
+	if !matchRegex {
+		return fmt.Errorf("Invalid value for Xmx: %s. Must be a positive integer followed by k,K,m,M,g, or G.", runner.Xmx)
+	}
+
 	if runner.CaseSettings == nil {
 		return errors.New("specify caseSettings and caseLocation")
 	}
