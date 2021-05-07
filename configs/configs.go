@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 
 	avian "github.com/avian-digital-forensics/auto-processing/pkg/avian-client"
@@ -28,9 +29,53 @@ type Servers struct {
 	Server avian.ServerApplyRequest `yaml:"server"`
 }
 
+// Validates the NMS config.
+// Returns an error if any are found or nil if the config is valid.
+func ValidateNmsConfigs(nmsList avian.NmsApplyRequests) error {
+	// Must loop through all NMS's here because of the different structure of NMS's in config.
+	for _, nms := range nmsList.Nms {
+		// Ensure valid port.
+		if nms.Port == 0 {
+			return errors.New("Port either not specified or set to 0. Neither is permitted.")
+		} else if nms.Port > 65535 {
+			return fmt.Errorf("Invalid port value %d. Port must not be higher than 65535", nms.Port)
+		}
+	}
+	return nil
+}
+
+// Performs necessary post-processing for NMS configs.
+func PostprocessNmsConfigs(nmsList avian.NmsApplyRequests) avian.NmsApplyRequests {
+	return nmsList
+}
+
+// Validates the server config.
+// Returns an error if any are found or nil if the config is valid.
+func ValidateServerConfig(server avian.ServerApplyRequest) error {
+	return nil
+}
+
+// Performs necessary post-processing for server configs.
+// For example sets the hostname to lower case.
+func PostprocessServerConfig(server avian.ServerApplyRequest) avian.ServerApplyRequest {
+	server.Hostname = strings.ToLower(server.Hostname)
+
+	return server
+}
+
 // Validates the runner config.
 // Returns an error if any are found or nil if the config is valid.
+// Most validation of runner should happen in validator.go instead.
 func ValidateRunnerConfig(runner avian.RunnerApplyRequest) error {
+	// Validate Xmx.
+	matchRegex, err := regexp.MatchString("^[0-9]+[kKmMgG]$", runner.Xmx)
+	if err != nil {
+		panic("Invalid regex in code.")
+	}
+	if !matchRegex {
+		return fmt.Errorf("Invalid value for Xmx: %s. Must be a positive integer followed by k,K,m,M,g, or G.", runner.Xmx)
+	}
+
 	if runner.CaseSettings == nil {
 		return errors.New("specify caseSettings and caseLocation")
 	}
@@ -103,21 +148,6 @@ func PostprocessRunnerConfig(runner avian.RunnerApplyRequest) avian.RunnerApplyR
 	runner.Hostname = strings.ToLower(runner.Hostname)
 
 	return runner
-}
-
-// Validates the server config.
-// Returns an error if any are found or nil if the config is valid.
-func ValidateServerConfig(server avian.ServerApplyRequest) error {
-	return nil
-}
-
-// Performs necessary post-processing for server configs.
-// For example sets the hostname to lower case.
-func PostprocessServerConfig(server avian.ServerApplyRequest) avian.ServerApplyRequest {
-	// Set hostname to lowercase to avoid case sensitivity.
-	server.Hostname = strings.ToLower(server.Hostname)
-
-	return server
 }
 
 // Decodes and reads the yaml.
