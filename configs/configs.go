@@ -46,6 +46,10 @@ func ValidateNmsConfigs(nmsList avian.NmsApplyRequests) error {
 
 // Performs necessary post-processing for NMS configs.
 func PostprocessNmsConfigs(nmsList avian.NmsApplyRequests) avian.NmsApplyRequests {
+	// Must loop through all NMS's here because of the different structure of NMS's in config.
+	for _, nms := range nmsList.Nms {
+		nms.Address = strings.ToLower(nms.Address)
+	}
 	return nmsList
 }
 
@@ -146,6 +150,7 @@ func PostprocessRunnerConfig(runner avian.RunnerApplyRequest) avian.RunnerApplyR
 
 	runner.Name = strings.ToLower(runner.Name)
 	runner.Hostname = strings.ToLower(runner.Hostname)
+	runner.Nms = strings.ToLower(runner.Nms)
 
 	return runner
 }
