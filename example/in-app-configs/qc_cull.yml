@@ -1,4 +1,19 @@
-num_descendants_metadata_key: NumberOfDescendants
+# See https://github.com/avian-digital-forensics/avian-scripts/blob/master/_root/inapp-scripts/automation-scripts/script_descriptions.md#qc-and-culling-not-tested for a complete description of all possible settings
+# Warning: The options here may be out of date.
+# See previous link for up to date information.
+#scoping_query:    # Optional
+existing_qc_handling: ignore
 report_path: C:\Users\aga\Documents\auto-processing\auto-processing\Report.rtf
+num_descendants_metadata_key: NumberOfDescendants
 num_source_files_provided: 2
-nsrl: false
+#date_format: %d/%m/%Y   # Optional
+#run_search_and_tag: true   # Optional
+#run_culling: true   # Optional
+#nsrl: false   # Optional
+#info_project_name: # Optional
+#info_collection_number: # Optional
+#info_requested_by: # Optional
+#info_ingestion_start_date: # Optional
+#info_ingestion_end_date: # Optional
+#info_ingestion_performed_by: # Optional
+#info_qc_performed_by: # Optional
