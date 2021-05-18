@@ -46,6 +46,9 @@ func (runner *Runner) Validate() error {
 	if runner.Workers == 0 {
 		return errors.New("must specify amount of workers")
 	}
+	if runner.Workers <= 0 {
+		return errors.New("Number of runners must be greater than zero.")
+	}
 
 	if err := runner.CaseSettings.Validate(); err != nil {
 		return err
