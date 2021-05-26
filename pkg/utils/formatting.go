@@ -1,6 +1,8 @@
 package utils
 
-import "fmt"
+import (
+	"path"
+)
 
 // RemoteScriptDir get the base-dirname of the avian-scripts path
 func RemoteScriptDir(nuixPath, localScriptDir string) string {
@@ -16,5 +18,10 @@ func RemoteScriptDir(nuixPath, localScriptDir string) string {
 		}
 	}
 
-	return fmt.Sprintf("%s\\%s", nuixPath, dirName)
+	return path.Join(nuixPath, dirName)
+}
+
+// Get the working directory available to the script.
+func ScriptWorkDir(nuixPath string) string {
+	return path.Join(nuixPath, "script_work_dir")
 }
