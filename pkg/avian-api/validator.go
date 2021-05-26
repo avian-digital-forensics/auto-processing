@@ -118,10 +118,6 @@ func (s *Stage) Nil() bool {
 // Validate validates a Stage
 func (s *Stage) Validate() error {
 	if s.Process != nil {
-		if emptyString(s.Process.Profile) {
-			return errors.New("must specify processing-profile for process-stage")
-		}
-
 		if len(s.Process.EvidenceStore) == 0 {
 			return errors.New("must specify evidence for the process-stage")
 		}

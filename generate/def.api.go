@@ -570,25 +570,14 @@ type Process struct {
 	// Foreign-key for stage
 	StageID uint
 
-	// Profile for the processor
-	Profile ProcessingProfile
+	// Path to the processing profile for the processor
+	ProfilePath string
 
 	// EvidenceStore to process to the nuix-case
 	EvidenceStore []*Evidence
 
 	// Status for the stage
 	Status int64
-}
-
-type ProcessingProfile struct {
-	// Base for the datastore
-	datastore.Base
-
-	// Original path given in runner config.
-	Path string
-
-	// Unique generated name for processing profile.
-	Name string
 }
 
 // Evidence holds information about a specific evidence
@@ -721,8 +710,8 @@ type Reload struct {
 	// StageID foreign-key for stage-table
 	StageID uint
 
-	// Profile for the reload-processing
-	Profile ProcessingProfile
+	// Path to the processing profile for the processor
+	ProfilePath string
 
 	// Search query in the case
 	Search string

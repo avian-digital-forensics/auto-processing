@@ -760,7 +760,7 @@ func (s RunnerService) Script(ctx context.Context, r api.RunnerGetRequest) (*api
 	if err := getPreloadedRunner(s.DB, &runner); err != nil {
 		return nil, err
 	}
-	script, err := ruby.Generate(s.serviceURL, "", runner)
+	script, err := ruby.Generate(s.serviceURL, "inapp_script_dir", "script_work_dir", runner)
 	if err != nil {
 		return nil, err
 	}

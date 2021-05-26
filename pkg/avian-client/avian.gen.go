@@ -1634,9 +1634,7 @@ type Process struct {
 	// Foreign-key for stage
 	StageID uint `json:"stageID" yaml:"stageID"`
 
-	// Profile for the processor
-	Profile string `json:"profile" yaml:"profile"`
-
+	// Path to the processing profile for the processor
 	ProfilePath string `json:"profilePath" yaml:"profilePath"`
 
 	// EvidenceStore to process to the nuix-case
@@ -1653,9 +1651,7 @@ type Reload struct {
 	// StageID foreign-key for stage-table
 	StageID uint `json:"stageID" yaml:"stageID"`
 
-	// Profile for the reload-processing
-	Profile string `json:"profile" yaml:"profile"`
-
+	// Path to the processing profile for the processor
 	ProfilePath string `json:"profilePath" yaml:"profilePath"`
 
 	// Search query in the case

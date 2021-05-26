@@ -229,6 +229,20 @@ def tear_down(single_case, compound_case, review_compound)
   end
 end
 
+# Adds a processing profile with given path and name to store and creates a processor with that profile.
+# The callback is run with that processor and when it is done, the processing profile is removed from the store.
+def with_processor(single_case, processing_profile_path, processing_profile_name, &run)
+  $utilities.get_processing_profile_store.import_profile(processing_profile_path, processing_profile_name)
+  
+  case_processor = single_case.create_processor
+  case_processor.set_processing_profile(processing_profile_name)
+
+  &run.call(case_processor)
+
+  $utilities.get_processing_profile_store.delete_profile(processing_profile_name)
+  File.delete(processing_profile_path)
+end
+
 # Create or open the single-case
 log_info('', 0, 'Opening single-case: <%= runner.CaseSettings.Case.Name %>')
 single_case = open_case({ 
@@ -252,6 +266,7 @@ review_compound = nil
 start_runner(single_case.guid.tr('-', ''))
 
 <%= if (hasProcessingStage(runner)) { %><%= if ((!getProcessingFailed(runner)) && (!elasticSearch(runner))) { %>
+  <% var processingStage = runner.
 # Create or open the compound-case
 log_info('', 0, 'Opening compound-case: <%= runner.CaseSettings.CompoundCase.Name %>')
 compound_case = open_case({ 
@@ -272,85 +287,76 @@ review_compound = open_case({
   'compound' => true,
 })<% } %>
 
-begin
-  # Check if the profile exists in the profile-store
-  unless $utilities.get_processing_profile_store.contains_profile('<%= getProcessingProfile(runner) %>')
-    # Import the profile
-    log_debug('', 0, 'Did not find the requested processing-profile in the profile-store')
-    log_info('', 0, 'Importing new processing-profile from <%= getProcessingProfilePath(runner) %>')
-    $utilities.get_processing_profile_store.import_profile('<%= getProcessingProfilePath(runner) %>', '<%= getProcessingProfile(runner) %>')
-    log_debug('', 0, 'Processing-profile has been imported')
+# Create processor.
+<% var processingProfilePath, processingProfileName = prepareProcessingProfile(runner, getProcessingProfilePath(runner)) %>
+with_processor(single_case, <%= processingProfilePath %>, <%= processingProfileName %>) do |processor|
+  begin
+    <%= if (getProcessingFailed(runner)) { %>case_processor.rescan_evidence_repositories(true)<% } else { %>
+    <%= for (i, evidence) in getEvidence(runner) { %>
+    # Create container for evidence: <%= evidence.Name %>
+    log_info('', 0, 'Adding evidence-container to case')
+    container_<%= i %> = case_processor.new_evidence_container('<%= evidence.Name %>')
+    container_<%= i %>.add_file('<%= evidence.Directory %>')
+    container_<%= i %>.set_description('<%= evidence.Description %>')
+    container_<%= i %>.set_encoding('<%= evidence.Encoding %>')
+    container_<%= i %>.set_time_zone('<%= evidence.TimeZone %>')
+    container_<%= i %>.set_initial_custodian('<%= evidence.Custodian %>')
+    container_<%= i %>.set_locale('<%= evidence.Locale %>')
+    container_<%= i %>.save
+    <% } %><% } %>
+  rescue => e
+    # handle exception
+    log_error('', 0, 'Cannot initialize processor', e)
+    STDOUT.puts('FINISHED RUNNER')
+    STDERR.puts("error initializing processor #{e}")
+    tear_down(single_case, compound_case, review_compound)
+    failed_runner(e)
+    exit(false)
   end
 
-  # Create a processor to process the evidence for the case
-  log_info('', 0, 'Creating processor for case-processing')
-  case_processor = single_case.create_processor
-  case_processor.set_processing_profile('<%= getProcessingProfile(runner) %>')
-  <%= if (getProcessingFailed(runner)) { %>case_processor.rescan_evidence_repositories(true)<% } else { %>
-  <%= for (i, evidence) in getEvidence(runner) { %>
-  # Create container for evidence: <%= evidence.Name %>
-  log_info('', 0, 'Adding evidence-container to case')
-  container_<%= i %> = case_processor.new_evidence_container('<%= evidence.Name %>')
-  container_<%= i %>.add_file('<%= evidence.Directory %>')
-  container_<%= i %>.set_description('<%= evidence.Description %>')
-  container_<%= i %>.set_encoding('<%= evidence.Encoding %>')
-  container_<%= i %>.set_time_zone('<%= evidence.TimeZone %>')
-  container_<%= i %>.set_initial_custodian('<%= evidence.Custodian %>')
-  container_<%= i %>.set_locale('<%= evidence.Locale %>')
-  container_<%= i %>.save
-  <% } %><% } %>
-rescue => e
-  # handle exception
-  log_error('', 0, 'Cannot initialize processor', e)
-  STDOUT.puts('FINISHED RUNNER')
-  STDERR.puts("error initializing processor #{e}")
-  tear_down(single_case, compound_case, review_compound)
-  failed_runner(e)
-  exit(false)
-end
+  # Start the processing
+  begin
+    # Start the process-stage (update api)
+    start(<%= getProcessingStageID(runner) %>)
 
-# Start the processing
-begin
-  # Start the process-stage (update api)
-  start(<%= getProcessingStageID(runner) %>)
+    # Handle the items being processed
+    semaphore = Mutex.new
+    processed_count = 0
+    case_processor.when_item_processed do |info|
+      semaphore.synchronize {
+        processed_count += 1
+        log_processed_item(
+          'Process', 
+          <%= getProcessingStageID(runner) %>, 
+          'Processed item', 
+          processed_count, 
+          info.mime_type, 
+          info.guid_path, 
+          '',
+          info.is_corrupted,
+          info.is_deleted,
+          info.is_encrypted,
+        )
+      }
+    end
 
-  # Handle the items being processed
-  semaphore = Mutex.new
-  processed_count = 0
-  case_processor.when_item_processed do |info|
-    semaphore.synchronize {
-      processed_count += 1
-      log_processed_item(
-        'Process', 
-        <%= getProcessingStageID(runner) %>, 
-        'Processed item', 
-        processed_count, 
-        info.mime_type, 
-        info.guid_path, 
-        '',
-        info.is_corrupted,
-        info.is_deleted,
-        info.is_encrypted,
-      )
-    }
+    log_info('Process', <%= getProcessingStageID(runner) %>, 'Start case-processing')
+    case_processor.process
+    log_info('Process', <%= getProcessingStageID(runner) %>, 'Finished case-processing')
+
+    # Finish the process-stage (update api)
+    finish(<%= getProcessingStageID(runner) %>)
+  rescue => e
+    # Handle the exception
+    # Set the process-stage to failed (update api)
+    failed(<%= getProcessingStageID(runner) %>)
+    tear_down(single_case, compound_case, review_compound)
+    log_error('Process', <%= getProcessingStageID(runner) %>, 'Processing failed', e)
+    STDOUT.puts('FINISHED RUNNER')
+    STDERR.puts("Processing failed: #{e}")
+    failed_runner(e)
+    exit(false)
   end
-
-  log_info('Process', <%= getProcessingStageID(runner) %>, 'Start case-processing')
-  case_processor.process
-  log_info('Process', <%= getProcessingStageID(runner) %>, 'Finished case-processing')
-
-  # Finish the process-stage (update api)
-  finish(<%= getProcessingStageID(runner) %>)
-rescue => e
-  # Handle the exception
-  # Set the process-stage to failed (update api)
-  failed(<%= getProcessingStageID(runner) %>)
-  tear_down(single_case, compound_case, review_compound)
-  log_error('Process', <%= getProcessingStageID(runner) %>, 'Processing failed', e)
-  STDOUT.puts('FINISHED RUNNER')
-  STDERR.puts("Processing failed: #{e}")
-  failed_runner(e)
-  exit(false)
 end
 <% } %><%= for (i, s) in getStages(runner) { %><%= if (isNoProcessing(s) && shouldRun(s)) { %> 
 # Start stage: <%= i %> - <%= stageName(s) %>

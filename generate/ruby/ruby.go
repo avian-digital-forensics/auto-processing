@@ -1,16 +1,24 @@
 package ruby
 
 import (
+	"encoding/xml"
 	"html/template"
+	"os"
+	"path"
 
 	api "github.com/avian-digital-forensics/auto-processing/pkg/avian-api"
 	"github.com/avian-digital-forensics/auto-processing/pkg/avian-client"
 	"github.com/avian-digital-forensics/auto-processing/pkg/inapp"
+	"github.com/avian-digital-forensics/auto-processing/pkg/utils"
 	"github.com/gobuffalo/plush"
 )
 
+func TempProcessingProfilePath(profileName, workDir string) string {
+	return path.Join(workDir, profileName+".xml")
+}
+
 // Generates a ruby script to be used by runner.
-func Generate(remoteAddress, scriptDir string, runner api.Runner) (string, error) {
+func Generate(remoteAddress, scriptDir, workDir string, runner api.Runner) (string, error) {
 	ctx := plush.NewContext()
 
 	// The code below defines functions that can be called when generating the ruby script.
@@ -33,16 +41,6 @@ func Generate(remoteAddress, scriptDir string, runner api.Runner) (string, error
 			}
 		}
 		return false
-	})
-
-	// Gets the processing profile of the first processing stage.
-	ctx.Set("getProcessingProfile", func(runner api.Runner) string {
-		for _, stage := range runner.Stages {
-			if stage.Process != nil {
-				return stage.Process.Profile
-			}
-		}
-		return ""
 	})
 
 	// Gets the settings file of the given in-app script settings as a string.
@@ -69,6 +67,31 @@ func Generate(remoteAddress, scriptDir string, runner api.Runner) (string, error
 			}
 		}
 		return false
+	})
+
+	//
+	ctx.Set("prepareProcessingProfile", func(runner api.Runner, processingProfilePath string) (string, string) {
+		var profileReader, error = os.Open(processingProfilePath)
+		if error != nil {
+			return "Error: Could not open processing profile file.", ""
+		}
+		type ParallelProcessingSettings struct {
+			WorkerCount int64 `xml:"worker-count"`
+		}
+		type Profile struct {
+			ParallelProcessingSettings ParallelProcessingSettings
+		}
+		var profile Profile
+		xml.NewDecoder(profileReader).Decode(&profile)
+		profile.ParallelProcessingSettings.WorkerCount = runner.Workers
+		var profileName = utils.GenerateId(8)
+		var tempProfilePath = TempProcessingProfilePath(profileName, workDir)
+		writer, err := os.Create(tempProfilePath)
+		if err != nil {
+			return "Error: Could not not create temp processing profile file.", ""
+		}
+		xml.NewEncoder(writer).Encode(profile)
+		return tempProfilePath, profileName
 	})
 
 	// Gets the path to the processing profile of the first processing stage.
