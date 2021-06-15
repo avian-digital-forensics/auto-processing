@@ -93,6 +93,19 @@ func Generate(remoteAddress, scriptDir string, runner api.Runner) (string, error
 		return nil
 	})
 
+	ctx.Set("getEvidenceDirectories", func(evidence api.Evidence) []string {
+		var result = make([]string, 0)
+		if evidence.Directories != nil {
+			for _, evidence_dir := range evidence.Directories {
+				result = append(result, evidence_dir)
+			}
+		}
+		if len(evidence.Directory) != 0 {
+			result = append(result, evidence.Directory)
+		}
+		return result
+	})
+
 	// Returns all stages for the runner.
 	ctx.Set("getStages", func(runner api.Runner) []*api.Stage { return runner.Stages })
 	ctx.Set("elasticSearch", func(runner api.Runner) bool { return runner.CaseSettings.Case.ElasticSearch != nil })

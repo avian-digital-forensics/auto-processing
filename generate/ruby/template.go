@@ -287,18 +287,21 @@ begin
   case_processor = single_case.create_processor
   case_processor.set_processing_profile('<%= getProcessingProfile(runner) %>')
   <%= if (getProcessingFailed(runner)) { %>case_processor.rescan_evidence_repositories(true)<% } else { %>
-  <%= for (i, evidence) in getEvidence(runner) { %>
-  # Create container for evidence: <%= evidence.Name %>
-  log_info('', 0, 'Adding evidence-container to case')
-  container_<%= i %> = case_processor.new_evidence_container('<%= evidence.Name %>')
-  container_<%= i %>.add_file('<%= evidence.Directory %>')
-  container_<%= i %>.set_description('<%= evidence.Description %>')
-  container_<%= i %>.set_encoding('<%= evidence.Encoding %>')
-  container_<%= i %>.set_time_zone('<%= evidence.TimeZone %>')
-  container_<%= i %>.set_initial_custodian('<%= evidence.Custodian %>')
-  container_<%= i %>.set_locale('<%= evidence.Locale %>')
-  container_<%= i %>.save
-  <% } %><% } %>
+    <%= for (i, evidence) in getEvidence(runner) { %>
+      # Create container for evidence: <%= evidence.Name %>
+      log_info('', 0, 'Adding evidence-container to case')
+      container_<%= i %> = case_processor.new_evidence_container('<%= evidence.Name %>')
+      <% for (j, evidence_dir) in getEvidenceDirectories(evidence) { %>
+        container_<%= i %>.add_file('<%= evidence_dir %>')
+      <% } %>
+      container_<%= i %>.set_description('<%= evidence.Description %>')
+      container_<%= i %>.set_encoding('<%= evidence.Encoding %>')
+      container_<%= i %>.set_time_zone('<%= evidence.TimeZone %>')
+      container_<%= i %>.set_initial_custodian('<%= evidence.Custodian %>')
+      container_<%= i %>.set_locale('<%= evidence.Locale %>')
+      container_<%= i %>.save
+    <% } %>
+  <% } %>
 rescue => e
   # handle exception
   log_error('', 0, 'Cannot initialize processor', e)
