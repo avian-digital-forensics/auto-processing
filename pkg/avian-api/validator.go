@@ -127,8 +127,8 @@ func (s *Stage) Validate() error {
 			if emptyString(evidence.Name) {
 				return fmt.Errorf("must specify name for evidence: #%d", i)
 			}
-			if emptyString(evidence.Directory) {
-				return fmt.Errorf("must specify directory for evidence: #%d", i)
+			if emptyString(evidence.Directory) && (evidence.Directories == nil || len(evidence.Directories) == 0) {
+				return fmt.Errorf("Must specify at least one directory for evidence: #%d", i)
 			}
 			if !emptyString(evidence.Locale) {
 				// Validate locale somewhat according to https://tools.ietf.org/html/rfc5646#section-2.1.1.

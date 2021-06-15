@@ -579,8 +579,10 @@ type Evidence struct {
 	ProcessID uint `json:"processID" yaml:"processID"`
 	// Name of the evidence
 	Name string `json:"name" yaml:"name"`
-	// Directory of where the evidence is located
+	// Directory where the evidence is located. Added to Directories list.
 	Directory string `json:"directory" yaml:"directory"`
+	// List of directories where the evidence is located.
+	Directories []string `json:"directories" yaml:"directories"`
 	// Description of the evidence
 	Description string `json:"description" yaml:"description"`
 	// Encoding for the evidence (used when processing)

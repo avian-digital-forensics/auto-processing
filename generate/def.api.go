@@ -592,8 +592,11 @@ type Evidence struct {
 	// Name of the evidence
 	Name string
 
-	// Directory of where the evidence is located
+	// Directory where the evidence is located. Added to Directories list.
 	Directory string
+
+	// List of directories where the evidence is located.
+	Directories []string
 
 	// Description of the evidence
 	Description string
